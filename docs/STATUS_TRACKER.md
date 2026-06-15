@@ -2,7 +2,7 @@
 
 *The live view of where the build is. Update as phases move. Last updated: 2026-06-15.*
 
-**Current focus:** Phase 0 complete → next is **Phase 1 (Foundation)**.
+**Current focus:** Phase 1 (Foundation) — code written on `imp/phase_1`; awaiting your Gradle **Sync** + **Run**.
 
 ## Legend
 `⬜ Not started` · `🟦 In progress` · `✅ Done` · `⛔ Blocked`
@@ -12,8 +12,8 @@
 | Phase | Name | Status | Started | Completed | Notes |
 |---|---|---|---|---|---|
 | 0 | Project & docs scaffolding | ✅ Done | 2026-06-15 | 2026-06-15 | Repo, .gitignore, README, full docs set, trackers. Git init pending user run of `scripts/init-git.sh`. |
-| 1 | Foundation (deps, DI, theme, nav) | ⬜ Not started | | | Adds Firebase + Hilt + Navigation; needs a Gradle sync. |
-| 2 | Authentication | ⬜ Not started | | | Email/password + phone (test number). |
+| 1 | Foundation (deps, DI, theme, nav) | 🟦 In progress | 2026-06-15 | | Libraries only (Navigation, Lifecycle-Compose, Coroutines). Manual DI — no Hilt (ADR-014). Branded theme + Welcome screen. Awaiting your Gradle sync + run. |
+| 2 | Authentication | ⬜ Not started | | | Adds google-services plugin + Firebase BOM (first Firebase use). Email/password + phone (test number). |
 | 3 | Profile | ⬜ Not started | | | |
 | 4 | Vacancy listings | ⬜ Not started | | | |
 | 5 | Requirement listings | ⬜ Not started | | | |
@@ -38,4 +38,5 @@
 
 | Date | Note |
 |---|---|
-| 2026-06-15 | v1 scope locked: trust-first two-sided core. Stack: Kotlin/Compose + Firebase + Hilt. |
+| 2026-06-15 | v1 scope locked: trust-first two-sided core. Stack: Kotlin/Compose + Firebase. |
+| 2026-06-15 | Phase 1 refined: libraries-only sync; **manual DI instead of Hilt** (ADR-014); Firebase moved to Phase 2 (ADR-015). |

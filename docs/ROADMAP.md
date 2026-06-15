@@ -12,13 +12,14 @@ Phases are sequenced so the app is **runnable and demoable at the end of each on
 **Exit:** documentation complete; project opens and builds as the default Compose scaffold.
 
 ## Phase 1 — Foundation
-**Goal:** wire the architecture so feature work is fast.
-**Deliverables:** add Firebase (BOM, Auth, Firestore) + the `google-services` plugin, Hilt + KSP, Navigation Compose, lifecycle-viewmodel-compose, coroutines-play-services; `NestmateApplication`; design system (theme + base components); navigation skeleton; `Result<T>`; DI modules; Firebase initialization check.
-**Exit:** app builds and runs, Firebase initializes, an empty nav skeleton renders. *(Requires you to run a Gradle sync.)*
+**Goal:** wire the architecture so feature work is fast — with a low-risk, plugin-free Gradle sync.
+**Deliverables:** add **libraries only** (Navigation Compose, Lifecycle ViewModel/Runtime-Compose, Coroutines); `NestmateApplication` + manual DI `AppContainer` (no Hilt — ADR-014); Nestmate-branded theme; navigation skeleton; `DataResult`; a branded Welcome screen.
+**Exit:** app builds and runs showing the Welcome screen. *(Requires you to run a Gradle sync.)*
+**Note:** Firebase + the `google-services` plugin were intentionally moved to **Phase 2** (first use) to isolate AGP-9 plugin risk (ADR-015).
 
 ## Phase 2 — Authentication
 **Goal:** real accounts.
-**Deliverables:** email/password sign-up & sign-in; phone verification (dev test number); auth-state gating (signed-out → auth flow, signed-in → app); sign-out.
+**Deliverables:** add the `google-services` plugin + Firebase BOM (Auth) and verify Firebase initializes; email/password sign-up & sign-in; phone verification (dev test number); auth-state gating (signed-out → auth flow, signed-in → app); sign-out.
 **Exit:** can create an account, verify phone, and stay signed in across restarts.
 
 ## Phase 3 — Profile

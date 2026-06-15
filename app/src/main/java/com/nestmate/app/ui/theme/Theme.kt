@@ -1,6 +1,5 @@
 package com.nestmate.app.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -11,33 +10,58 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+private val LightColors = lightColorScheme(
+    primary = NestPrimaryLight,
+    onPrimary = NestOnPrimaryLight,
+    primaryContainer = NestPrimaryContainerLight,
+    onPrimaryContainer = NestOnPrimaryContainerLight,
+    secondary = NestSecondaryLight,
+    onSecondary = NestOnSecondaryLight,
+    secondaryContainer = NestSecondaryContainerLight,
+    onSecondaryContainer = NestOnSecondaryContainerLight,
+    tertiary = NestTertiaryLight,
+    onTertiary = NestOnTertiaryLight,
+    background = NestBackgroundLight,
+    onBackground = NestOnBackgroundLight,
+    surface = NestSurfaceLight,
+    onSurface = NestOnSurfaceLight,
+    surfaceVariant = NestSurfaceVariantLight,
+    onSurfaceVariant = NestOnSurfaceVariantLight,
+    outline = NestOutlineLight,
+    error = NestErrorLight,
+    onError = NestOnErrorLight,
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+private val DarkColors = darkColorScheme(
+    primary = NestPrimaryDark,
+    onPrimary = NestOnPrimaryDark,
+    primaryContainer = NestPrimaryContainerDark,
+    onPrimaryContainer = NestOnPrimaryContainerDark,
+    secondary = NestSecondaryDark,
+    onSecondary = NestOnSecondaryDark,
+    secondaryContainer = NestSecondaryContainerDark,
+    onSecondaryContainer = NestOnSecondaryContainerDark,
+    tertiary = NestTertiaryDark,
+    onTertiary = NestOnTertiaryDark,
+    background = NestBackgroundDark,
+    onBackground = NestOnBackgroundDark,
+    surface = NestSurfaceDark,
+    onSurface = NestOnSurfaceDark,
+    surfaceVariant = NestSurfaceVariantDark,
+    onSurfaceVariant = NestOnSurfaceVariantDark,
+    outline = NestOutlineDark,
+    error = NestErrorDark,
+    onError = NestOnErrorDark,
 )
 
+/**
+ * App theme. Uses the Nestmate brand palette by default. Set [dynamicColor] to
+ * true to opt into Android 12+ wallpaper-based dynamic color instead.
+ */
 @Composable
 fun NestmateTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -46,8 +70,8 @@ fun NestmateTheme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> DarkColors
+        else -> LightColors
     }
 
     MaterialTheme(

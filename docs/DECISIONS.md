@@ -28,6 +28,7 @@
 **Context:** Need DI for repositories and Firebase singletons; want compile-time safety.
 **Decision:** Hilt (with KSP).
 **Consequence:** Standard, checked DI; adds annotation processing to the build.
+**Status:** ⚠️ Superseded by ADR-014 — deferred due to AGP 9 incompatibility.
 
 ### ADR-006 — Navigation Compose, single-activity
 **Context:** Compose-first navigation.
@@ -68,3 +69,18 @@
 **Context:** Real SMS is capped at 10/day until billing is added.
 **Decision:** Use the registered test number (`+91 829…` / `123456`) during development.
 **Consequence:** Unlimited auth testing without burning SMS; real-device testing needs the SHA-1 added.
+
+### ADR-014 — Defer Hilt; use manual DI for now (supersedes ADR-005)
+**Context:** Hilt's Gradle plugin has known incompatibilities with AGP 9's removal of the legacy variant API, and this project can't be compile-tested in the build environment — Hilt is the riskiest piece for a clean first build.
+**Decision:** Use lightweight **manual DI** — an `AppContainer` held by `NestmateApplication` — instead of Hilt. Revisit once Hilt's AGP 9 support is confirmed stable.
+**Consequence:** Zero annotation-processing/plugin risk. The architecture (repositories behind interfaces) is unchanged, so a later migration to Hilt is mechanical.
+
+### ADR-015 — Add Firebase + google-services plugin in Phase 2, not Phase 1
+**Context:** The google-services Gradle plugin is the other AGP-9-sensitive integration, and nothing in Phase 1 actually uses Firebase yet.
+**Decision:** Phase 1 adds **libraries only** (Navigation, Lifecycle-Compose, Coroutines). The `google-services` plugin and Firebase BOM are added at the start of Phase 2 (Auth).
+**Consequence:** Phase 1 gets a low-risk, plugin-free Gradle sync; any AGP-9/Firebase plugin issues are isolated to Phase 2.
+
+### ADR-016 — Rely on AGP 9 built-in Kotlin (no `kotlin-android` plugin)
+**Context:** AGP 9.2 compiles Kotlin natively; the scaffold has no separate `kotlin-android` plugin.
+**Decision:** Use AGP 9's built-in Kotlin; don't add the `kotlin-android` plugin.
+**Consequence:** Simpler plugin set; note that older guides assume a separate Kotlin plugin.

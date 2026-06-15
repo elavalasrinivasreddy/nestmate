@@ -36,10 +36,13 @@
 | Date | Phase / scope | Findings | Actions | Tech debt noted |
 |------|---------------|----------|---------|-----------------|
 | 2026-06-15 | Phase 0 — scaffolding & docs | Baseline only; default Compose scaffold + docs. Nothing to review functionally yet. | Proceed to Phase 1. | None. |
+| 2026-06-15 | Phase 1 — foundation | Libraries-only Gradle change (no plugins) to de-risk the first sync on AGP 9; manual DI instead of Hilt; theme kept in `ui.theme` package; can't compile-test in this environment. | Hand off for first Sync + Run; fix any version issues iteratively. | See backlog items 1–3 below. |
 
 ---
 
 ### Tech-debt backlog
 *Things consciously deferred — revisit before calling v1 done.*
 
-- *(empty)*
+1. **Theme package** lives in `com.nestmate.app.ui.theme` (AS default) rather than `core/designsystem` as in `ARCHITECTURE.md`. Consolidate when convenient.
+2. **`AppContainer`** is an empty placeholder until Phase 2 adds the first repository.
+3. **Hilt migration** deferred (ADR-014) — revisit once AGP 9 support is confirmed stable.
