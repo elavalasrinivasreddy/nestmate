@@ -1,0 +1,74 @@
+# Nestmate — Roadmap
+
+*Living document. Last updated: 2026-06-15. Live progress lives in `STATUS_TRACKER.md`.*
+
+Phases are sequenced so the app is **runnable and demoable at the end of each one**. v1 = Phases 1–9 (the trust-first two-sided core). Everything after is post-v1.
+
+---
+
+## Phase 0 — Project & docs scaffolding
+**Goal:** repo, docs, and trackers in place.
+**Deliverables:** git repo, `.gitignore`, README, full `docs/` set, status/bugs/reviews trackers.
+**Exit:** documentation complete; project opens and builds as the default Compose scaffold.
+
+## Phase 1 — Foundation
+**Goal:** wire the architecture so feature work is fast.
+**Deliverables:** add Firebase (BOM, Auth, Firestore) + the `google-services` plugin, Hilt + KSP, Navigation Compose, lifecycle-viewmodel-compose, coroutines-play-services; `NestmateApplication`; design system (theme + base components); navigation skeleton; `Result<T>`; DI modules; Firebase initialization check.
+**Exit:** app builds and runs, Firebase initializes, an empty nav skeleton renders. *(Requires you to run a Gradle sync.)*
+
+## Phase 2 — Authentication
+**Goal:** real accounts.
+**Deliverables:** email/password sign-up & sign-in; phone verification (dev test number); auth-state gating (signed-out → auth flow, signed-in → app); sign-out.
+**Exit:** can create an account, verify phone, and stay signed in across restarts.
+
+## Phase 3 — Profile
+**Goal:** trustworthy identity.
+**Deliverables:** create/edit profile (name, type, occupation, bio, preferred locations, lifestyle); show verification badges (email/phone).
+**Exit:** profile persists to `users/{uid}` and is editable.
+
+## Phase 4 — Vacancy listings ("I have a room")
+**Goal:** the supply side.
+**Deliverables:** create/edit/delete a vacancy; listings feed; listing detail.
+**Exit:** a room-holder can post, edit, delete; others can browse and open a listing.
+
+## Phase 5 — Requirement listings ("I need a room")
+**Goal:** the demand side — the two-way differentiator.
+**Deliverables:** create/edit/delete a requirement; requirements feed; detail.
+**Exit:** a seeker can post what they want; room-holders can browse it.
+
+## Phase 6 — Discovery
+**Goal:** make the marketplace usable.
+**Deliverables:** search + filters by location, budget range, and room type, across both listings and requirements; empty/loading states.
+**Exit:** filtered queries return correct results with the needed Firestore indexes in place.
+
+## Phase 7 — Chat
+**Goal:** connect the two sides.
+**Deliverables:** start a conversation from a listing/requirement; real-time message thread; conversation list with last-message preview.
+**Exit:** two accounts can exchange messages in real time.
+
+## Phase 8 — Bookmarks
+**Goal:** let users keep track.
+**Deliverables:** save/unsave listings and requirements; saved-items screen.
+**Exit:** bookmarks persist per user and render quickly.
+
+## Phase 9 — Trust hardening (v1 gate)
+**Goal:** make it safe and solid before calling v1 done.
+**Deliverables:** deploy & test Firestore security rules; input validation everywhere; consistent empty/error/loading states; basic report/block; profile-verification polish.
+**Exit:** no open writes; rules tested; the full loop is robust. **→ v1 complete.**
+
+---
+
+## Post-v1
+
+| Phase | Theme | Notes |
+|---|---|---|
+| 10 | **Photos** | Unblocks once Firebase Storage is enabled (billing). Upload/display/manage for listings + profiles. |
+| 11 | **Reviews, ratings & reporting** | Needs usage volume to matter; moderation tooling. |
+| 12 | **AI layer** *(your edge)* | Conversational search, embeddings-based compatibility matching, fake-listing/scam detection. |
+| 13+ | **Transactions & expansion** | Visit scheduling, digital agreements, payments; later iOS/web. |
+
+## Known dependencies / blockers
+
+- **Firebase Storage** off (billing) → photos deferred to Phase 10.
+- **Phone auth** uses the dev test number (+91 829…, code `123456`); real SMS is capped at 10/day until billing is added.
+- **SHA-1** fingerprint must be added to the Firebase Android app before real phone auth works on device (command in `SETUP.md`).
