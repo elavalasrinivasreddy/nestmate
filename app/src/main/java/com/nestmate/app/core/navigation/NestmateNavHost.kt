@@ -10,7 +10,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.nestmate.app.NestmateApplication
 import com.nestmate.app.feature.auth.AuthScreen
-import com.nestmate.app.feature.auth.PhoneVerifyScreen
 import com.nestmate.app.feature.home.HomeScreen
 import com.nestmate.app.feature.welcome.WelcomeScreen
 
@@ -58,13 +57,7 @@ fun NestmateNavHost(
                     navController.navigate(Destination.Welcome.route) {
                         popUpTo(Destination.Home.route) { inclusive = true }
                     }
-                },
-                onVerifyPhone = { navController.navigate(Destination.PhoneVerify.route) }
-            )
-        }
-        composable(Destination.PhoneVerify.route) {
-            PhoneVerifyScreen(
-                onVerified = { navController.popBackStack() }
+                }
             )
         }
     }

@@ -19,8 +19,8 @@ Phases are sequenced so the app is **runnable and demoable at the end of each on
 
 ## Phase 2 — Authentication ✅ Done
 **Goal:** real accounts.
-**Deliverables:** `google-services` plugin + Firebase BOM (Auth). **2a:** email/password sign-up & sign-in, auth-state gating (signed-out → Welcome/Auth, signed-in → Home), sign-out. **2b:** phone verification (`PhoneAuthProvider`) reachable from Home, linking the phone credential to the signed-in account (ADR-019).
-**Exit:** create an account and stay signed in across restarts (2a) — met. Phone verification works (2b) — code-complete and build-verified; real-device SMS/test-number run is a manual step for you (needs the Firebase console **Phone** provider enabled + the SHA-1 in `SETUP.md`).
+**Deliverables:** `google-services` plugin + Firebase BOM (Auth). **2:** phone auth (OTP) using `PhoneAuthProvider` reachable from `AuthScreen` to handle signup and sign-in directly. Auth-state gating (signed-out → Welcome/Auth, signed-in → Home), sign-out.
+**Exit:** Phone authentication works, creating an account and staying signed in across restarts. Real-device SMS/test-number run is a manual step for you (needs the Firebase console **Phone** provider enabled + the SHA-1 in `SETUP.md`).
 
 ## Phase 3 — Profile
 **Goal:** trustworthy identity.

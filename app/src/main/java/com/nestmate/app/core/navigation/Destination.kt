@@ -8,5 +8,4 @@ sealed class Destination(val route: String) {
     data object Welcome : Destination("welcome")
     data object Auth : Destination("auth")
     data object Home : Destination("home")
-    data object PhoneVerify : Destination("phone_verify")
 }

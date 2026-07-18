@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -22,13 +21,11 @@ import com.nestmate.app.NestmateApplication
 
 /**
  * Signed-in placeholder. The real two-sided feed (listings + requirements)
- * arrives in later phases. For now it confirms auth works, offers phone
- * verification (ADR-018 — 2b), and sign-out.
+ * arrives in later phases. For now it confirms auth works and offers sign-out.
  */
 @Composable
 fun HomeScreen(
     onSignOut: () -> Unit,
-    onVerifyPhone: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -53,19 +50,8 @@ fun HomeScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Signed in as ${user?.email ?: "your account"}",
+                text = "Signed in with ${user?.phoneNumber ?: "your phone"}",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = if (user?.phoneNumber != null) {
-                    "Phone verified: ${user.phoneNumber}"
-                } else {
-                    "Phone not verified yet"
-                },
-                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
@@ -77,12 +63,6 @@ fun HomeScreen(
                 textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(24.dp))
-            if (user?.phoneNumber == null) {
-                Button(onClick = onVerifyPhone) {
-                    Text("Verify phone number")
-                }
-                Spacer(Modifier.height(12.dp))
-            }
             OutlinedButton(
                 onClick = {
                     container.authRepository.signOut()

@@ -17,7 +17,7 @@ private class NoOpActivity : Activity()
 
 /**
  * A scriptable [AuthRepository] fake — no Firebase/coroutine-test deps needed
- * since [PhoneVerificationViewModel] drives the callback-based phone API
+ * since [AuthViewModel] drives the callback-based phone API
  * synchronously (see docs/ARCHITECTURE.md → repositories are fakeable).
  */
 private class FakeAuthRepository : AuthRepository {
@@ -26,12 +26,6 @@ private class FakeAuthRepository : AuthRepository {
     var onConfirmCode: ((verificationId: String, code: String) -> Unit)? = null
 
     override fun authState(): Flow<AuthUser?> = MutableSharedFlow()
-
-    override suspend fun signUpWithEmail(email: String, password: String): DataResult<AuthUser> =
-        error("not used in this test")
-
-    override suspend fun signInWithEmail(email: String, password: String): DataResult<AuthUser> =
-        error("not used in this test")
 
     override fun startPhoneVerification(
         phoneNumber: String,
@@ -62,15 +56,15 @@ private class FakeAuthRepository : AuthRepository {
     var lastOnVerified: ((DataResult<AuthUser>) -> Unit)? = null
 }
 
-class PhoneVerificationViewModelTest {
+class AuthViewModelTest {
 
     private val activity = NoOpActivity()
-    private val testUser = AuthUser(uid = "u1", email = "a@b.com", phoneNumber = "+911234567890", isEmailVerified = true)
+    private val testUser = AuthUser(uid = "u1", phoneNumber = "+911234567890")
 
     @Test
     fun `canSendCode requires E164-ish number and rejects while loading`() {
         val repo = FakeAuthRepository()
-        val vm = PhoneVerificationViewModel(repo)
+        val vm = AuthViewModel(repo)
 
         assertFalse(vm.uiState.value.canSendCode) // blank number
         vm.onPhoneNumberChange("+9198765")
@@ -84,39 +78,39 @@ class PhoneVerificationViewModelTest {
         val repo = FakeAuthRepository().apply {
             onStartVerification = { lastOnCodeSent?.invoke("verification-id-1") }
         }
-        val vm = PhoneVerificationViewModel(repo)
+        val vm = AuthViewModel(repo)
         vm.onPhoneNumberChange("+919876543210")
 
         vm.sendCode(activity)
 
         val state = vm.uiState.value
-        assertEquals(PhoneVerificationViewModel.Step.ENTER_CODE, state.step)
+        assertEquals(AuthViewModel.Step.ENTER_CODE, state.step)
         assertEquals("verification-id-1", state.verificationId)
         assertFalse(state.isLoading)
     }
 
     @Test
-    fun `sendCode that auto-verifies marks the state verified without a code step`() {
+    fun `sendCode that auto-verifies marks the state authenticated without a code step`() {
         val repo = FakeAuthRepository().apply {
             onStartVerification = { lastOnVerified?.invoke(DataResult.Success(testUser)) }
         }
-        val vm = PhoneVerificationViewModel(repo)
+        val vm = AuthViewModel(repo)
         vm.onPhoneNumberChange("+919876543210")
 
         vm.sendCode(activity)
 
         val state = vm.uiState.value
-        assertTrue(state.isVerified)
-        assertEquals(PhoneVerificationViewModel.Step.ENTER_PHONE, state.step) // never advanced — no code step needed
+        assertTrue(state.isAuthenticated)
+        assertEquals(AuthViewModel.Step.ENTER_PHONE, state.step) // never advanced — no code step needed
     }
 
     @Test
-    fun `confirmCode surfaces a repository error without marking verified`() {
+    fun `confirmCode surfaces a repository error without marking authenticated`() {
         val repo = FakeAuthRepository().apply {
             onStartVerification = { lastOnCodeSent?.invoke("verification-id-2") }
             onConfirmCode = { _, _ -> lastOnVerified?.invoke(DataResult.Error("Invalid code.")) }
         }
-        val vm = PhoneVerificationViewModel(repo)
+        val vm = AuthViewModel(repo)
         vm.onPhoneNumberChange("+919876543210")
         vm.sendCode(activity)
         vm.onCodeChange("000000")
@@ -124,18 +118,18 @@ class PhoneVerificationViewModelTest {
         vm.confirmCode()
 
         val state = vm.uiState.value
-        assertFalse(state.isVerified)
+        assertFalse(state.isAuthenticated)
         assertEquals("Invalid code.", state.errorMessage)
         assertFalse(state.isLoading)
     }
 
     @Test
-    fun `confirmCode succeeds and marks the state verified`() {
+    fun `confirmCode succeeds and marks the state authenticated`() {
         val repo = FakeAuthRepository().apply {
             onStartVerification = { lastOnCodeSent?.invoke("verification-id-3") }
             onConfirmCode = { _, _ -> lastOnVerified?.invoke(DataResult.Success(testUser)) }
         }
-        val vm = PhoneVerificationViewModel(repo)
+        val vm = AuthViewModel(repo)
         vm.onPhoneNumberChange("+919876543210")
         vm.sendCode(activity)
         vm.onCodeChange("123456")
@@ -143,7 +137,7 @@ class PhoneVerificationViewModelTest {
         vm.confirmCode()
 
         val state = vm.uiState.value
-        assertTrue(state.isVerified)
+        assertTrue(state.isAuthenticated)
         assertNull(state.errorMessage)
     }
 }

@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.tasks.await
 
 /**
  * Firebase-backed [AuthRepository]. Keeps all Firebase Auth calls in one place
@@ -33,26 +32,6 @@ class FirebaseAuthRepository(
         auth.addAuthStateListener(listener)
         awaitClose { auth.removeAuthStateListener(listener) }
     }
-
-    override suspend fun signUpWithEmail(email: String, password: String): DataResult<AuthUser> =
-        try {
-            val result = auth.createUserWithEmailAndPassword(email.trim(), password).await()
-            result.user?.toAuthUser()
-                ?.let { DataResult.Success(it) }
-                ?: DataResult.Error("Account created, but no user was returned.")
-        } catch (e: Exception) {
-            DataResult.Error(e.message ?: "Could not create your account.", e)
-        }
-
-    override suspend fun signInWithEmail(email: String, password: String): DataResult<AuthUser> =
-        try {
-            val result = auth.signInWithEmailAndPassword(email.trim(), password).await()
-            result.user?.toAuthUser()
-                ?.let { DataResult.Success(it) }
-                ?: DataResult.Error("Signed in, but no user was returned.")
-        } catch (e: Exception) {
-            DataResult.Error(e.message ?: "Could not sign you in.", e)
-        }
 
     override fun startPhoneVerification(
         phoneNumber: String,
@@ -92,16 +71,14 @@ class FirebaseAuthRepository(
     }
 
     /**
-     * Links [credential] to the signed-in user (adds phone as a second verified
-     * factor), or signs in fresh if nobody is signed in. Firebase's phone APIs
+     * Signs in with the given [credential]. Firebase's phone APIs
      * are Task-based rather than suspend, so this stays callback-based to match.
      */
     private fun resolvePhoneCredential(
         credential: PhoneAuthCredential,
         onResult: (DataResult<AuthUser>) -> Unit
     ) {
-        val task = auth.currentUser?.linkWithCredential(credential)
-            ?: auth.signInWithCredential(credential)
+        val task = auth.signInWithCredential(credential)
         task.addOnCompleteListener { completed ->
             if (completed.isSuccessful) {
                 val user = completed.result?.user?.toAuthUser()
@@ -122,7 +99,6 @@ class FirebaseAuthRepository(
 
 private fun FirebaseUser.toAuthUser(): AuthUser = AuthUser(
     uid = uid,
-    email = email,
     phoneNumber = phoneNumber,
-    isEmailVerified = isEmailVerified
+    email = email
 )

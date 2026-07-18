@@ -17,14 +17,9 @@ interface AuthRepository {
     /** Emits the current user on every auth-state change (sign-in / sign-out). */
     fun authState(): Flow<AuthUser?>
 
-    suspend fun signUpWithEmail(email: String, password: String): DataResult<AuthUser>
-
-    suspend fun signInWithEmail(email: String, password: String): DataResult<AuthUser>
-
     /**
      * Starts phone-number verification for the given [phoneNumber] (E.164, e.g.
-     * `+919876543210`). Verifies against the currently signed-in user (links the
-     * phone credential) if one exists, otherwise signs in with the phone alone.
+     * `+919876543210`). Signs in with the phone credential.
      *
      * Exactly one of [onCodeSent] or [onVerified] fires first: SMS auto-retrieval
      * (or a Firebase test number configured for instant validation) resolves

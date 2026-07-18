@@ -21,7 +21,7 @@ users/{uid}/bookmarks/{itemId}
 |---|---|---|
 | `uid` | string | == Firebase Auth UID |
 | `displayName` | string | |
-| `email` | string | |
+| `email` | string? | **Optional (legacy)** kept in case users link it later |
 | `phoneNumber` | string? | E.164, set after phone verification |
 | `photoUrl` | string? | **deferred** (Storage) |
 | `userType` | string enum | `seeker` \| `room_holder` \| `both` |
@@ -29,7 +29,7 @@ users/{uid}/bookmarks/{itemId}
 | `bio` | string? | |
 | `preferredLocations` | array<string> | city/area names |
 | `lifestyle` | map | `{ smoking, food, sleepSchedule, cleanliness }` — for compatibility |
-| `verification` | map | `{ emailVerified: bool, phoneVerified: bool }` |
+| `verification` | map | `{ phoneVerified: bool }` |
 | `createdAt` / `updatedAt` | timestamp | |
 
 ## `listings/{listingId}` — vacancy

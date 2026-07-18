@@ -6,7 +6,6 @@ package com.nestmate.app.data.model
  */
 data class AuthUser(
     val uid: String,
-    val email: String?,
     val phoneNumber: String?,
-    val isEmailVerified: Boolean
+    val email: String? = null // Optional, kept in case users link it later or for legacy
 )

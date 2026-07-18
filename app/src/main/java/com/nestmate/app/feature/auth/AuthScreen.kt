@@ -1,5 +1,6 @@
 package com.nestmate.app.feature.auth
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -25,15 +26,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nestmate.app.NestmateApplication
 
 /**
- * Email/password sign-in & sign-up. Toggles between the two modes. On success,
- * [onAuthenticated] is invoked so the nav layer can route to Home.
+ * Phone authentication. Enter a phone number, receive/enter an
+ * SMS code, and sign in.
  */
 @Composable
 fun AuthScreen(
@@ -46,6 +47,7 @@ fun AuthScreen(
     )
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val activity = LocalContext.current as Activity
 
     LaunchedEffect(state.isAuthenticated) {
         if (state.isAuthenticated) onAuthenticated()
@@ -64,64 +66,95 @@ fun AuthScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = if (state.isSignUp) "Create your account" else "Welcome back",
+                text = "Sign in to Nestmate",
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.primary
             )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "We will send you an OTP to verify your number.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
             Spacer(Modifier.height(20.dp))
 
-            OutlinedTextField(
-                value = state.email,
-                onValueChange = viewModel::onEmailChange,
-                label = { Text("Email") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = state.password,
-                onValueChange = viewModel::onPasswordChange,
-                label = { Text("Password") },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                supportingText = { Text("At least ${AuthViewModel.MIN_PASSWORD_LENGTH} characters") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            if (state.errorMessage != null) {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = state.errorMessage!!,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-
-            Spacer(Modifier.height(20.dp))
-            Button(
-                onClick = viewModel::submit,
-                enabled = state.canSubmit,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (state.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
+            when (state.step) {
+                AuthViewModel.Step.ENTER_PHONE -> {
+                    OutlinedTextField(
+                        value = state.phoneNumber,
+                        onValueChange = viewModel::onPhoneNumberChange,
+                        label = { Text("Phone number") },
+                        placeholder = { Text("+91XXXXXXXXXX") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        supportingText = { Text("Include the country code, e.g. +91") },
+                        modifier = Modifier.fillMaxWidth()
                     )
-                } else {
-                    Text(if (state.isSignUp) "Create account" else "Sign in")
+                    Spacer(Modifier.height(20.dp))
+                    Button(
+                        onClick = { viewModel.sendCode(activity) },
+                        enabled = state.canSendCode,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (state.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Send code")
+                        }
+                    }
+                }
+
+                AuthViewModel.Step.ENTER_CODE -> {
+                    Text(
+                        text = "Enter the code sent to ${state.phoneNumber.trim()}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = state.code,
+                        onValueChange = viewModel::onCodeChange,
+                        label = { Text("Verification code") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    Button(
+                        onClick = viewModel::confirmCode,
+                        enabled = state.canConfirmCode,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (state.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Verify & Sign in")
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    TextButton(onClick = { viewModel.sendCode(activity) }) {
+                        Text("Resend code")
+                    }
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
-            TextButton(onClick = viewModel::toggleMode) {
+            if (state.errorMessage != null) {
+                Spacer(Modifier.height(12.dp))
                 Text(
-                    if (state.isSignUp) "Already have an account? Sign in"
-                    else "New here? Create an account"
+                    text = state.errorMessage!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center
                 )
             }
         }

@@ -29,7 +29,7 @@ Unlike whole-property rental portals, Nestmate is **room-level and roommate-leve
 ## v1 scope — trust-first two-sided core
 
 **In scope**
-1. **Accounts & profiles** — email + phone auth, profile with verification flags.
+1. **Accounts & profiles** — phone auth (OTP), profile with verification flags.
 2. **Vacancy listings** — create, edit, delete, view ("I have a room").
 3. **Requirement listings** — create, edit, delete, view ("I need a room").
 4. **Discovery** — search + filters: location, budget range, room type.
@@ -45,7 +45,7 @@ Unlike whole-property rental portals, Nestmate is **room-level and roommate-leve
 
 ## Core user stories (v1)
 
-- As a seeker, I can sign up, verify my phone, and create a profile so others trust I'm real.
+- As a seeker, I can sign up with my phone number, verify it via OTP, and create a profile so others trust I'm real.
 - As a room-holder, I can post a vacancy with rent, deposit, availability, and preferences.
 - As a seeker, I can post what I'm looking for so room-holders can reach me.
 - As either side, I can search and filter by location, budget, and room type.
