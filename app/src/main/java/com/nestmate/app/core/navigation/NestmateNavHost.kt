@@ -65,7 +65,7 @@ fun NestmateNavHost(
                     }
                 },
                 onNavigateToProfile = { navController.navigate(Destination.Profile.route) },
-                onNavigateToCreateListing = { navController.navigate(Destination.CreateListing.route) },
+                onNavigateToCreateListing = { navController.navigate(Destination.CreateListing().route) },
                 onNavigateToListingDetail = { id -> navController.navigate(Destination.ListingDetail(id).route) }
             )
         }
@@ -76,11 +76,13 @@ fun NestmateNavHost(
                 }
             )
         }
-        composable(Destination.CreateListing.route) {
+        composable(Destination.CreateListing.route) { backStackEntry ->
+            val listingId = backStackEntry.arguments?.getString("id")
             val createListingViewModel: CreateEditListingViewModel = viewModel(
                 factory = CreateEditListingViewModel.provideFactory(
                     container.authRepository,
-                    container.listingRepository
+                    container.listingRepository,
+                    listingId
                 )
             )
             CreateListingScreen(
@@ -92,12 +94,15 @@ fun NestmateNavHost(
             val listingId = backStackEntry.arguments?.getString("id") ?: return@composable
             val detailViewModel: ListingDetailViewModel = viewModel(
                 factory = ListingDetailViewModel.provideFactory(
+                    container.authRepository,
                     container.listingRepository,
                     listingId
                 )
             )
             ListingDetailScreen(
-                viewModel = detailViewModel
+                viewModel = detailViewModel,
+                onEdit = { navController.navigate(Destination.CreateListing(listingId).route) },
+                onDeleted = { navController.popBackStack() }
             )
         }
     }
