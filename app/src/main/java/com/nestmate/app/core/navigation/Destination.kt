@@ -21,4 +21,16 @@ sealed class Destination(val route: String) {
             const val route = "listing_detail/{id}"
         }
     }
+    data class CreateRequirement(val id: String? = null) : Destination(
+        if (id != null) "create_requirement?id=$id" else "create_requirement"
+    ) {
+        companion object {
+            const val route = "create_requirement?id={id}"
+        }
+    }
+    data class RequirementDetail(val id: String) : Destination("requirement_detail/$id") {
+        companion object {
+            const val route = "requirement_detail/{id}"
+        }
+    }
 }

@@ -32,10 +32,10 @@ Phases are sequenced so the app is **runnable and demoable at the end of each on
 **Deliverables:** create/edit/delete a vacancy; listings feed; listing detail.
 **Exit:** a room-holder can post, edit, delete; others can browse and open a listing. Handled composite-index requirement gracefully via copyable error UI.
 
-## Phase 5 — Requirement listings ("I need a room")
+## Phase 5 — Requirement listings ("I need a room") ✅ Done
 **Goal:** the demand side — the two-way differentiator.
 **Deliverables:** create/edit/delete a requirement; requirements feed; detail.
-**Exit:** a seeker can post what they want; room-holders can browse it.
+**Exit:** a seeker can post what they want; room-holders can browse it via the dual-feed dashboard.
 
 ## Phase 6 — Discovery
 **Goal:** make the marketplace usable.

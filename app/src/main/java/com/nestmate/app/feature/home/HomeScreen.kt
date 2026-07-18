@@ -3,9 +3,15 @@ package com.nestmate.app.feature.home
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -16,6 +22,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nestmate.app.NestmateApplication
 import com.nestmate.app.feature.listing.ListingFeedScreen
 import com.nestmate.app.feature.listing.ListingFeedViewModel
+import com.nestmate.app.feature.requirement.RequirementFeedScreen
+import com.nestmate.app.feature.requirement.RequirementFeedViewModel
 
 @Composable
 fun HomeScreen(
@@ -23,6 +31,8 @@ fun HomeScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToCreateListing: () -> Unit,
     onNavigateToListingDetail: (String) -> Unit,
+    onNavigateToCreateRequirement: () -> Unit,
+    onNavigateToRequirementDetail: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel(
         factory = HomeViewModel.provideFactory(
@@ -32,6 +42,8 @@ fun HomeScreen(
     )
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val container = remember { (context.applicationContext as NestmateApplication).container }
 
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -45,7 +57,6 @@ fun HomeScreen(
         }
 
         if (!state.hasProfile) {
-            // Onboarding State
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -85,49 +96,63 @@ fun HomeScreen(
                 }
             }
         } else {
-            // Dashboard State - Listing Feed
+            var selectedTab by remember { mutableStateOf(0) }
+            val tabs = listOf("Rooms", "Roommates", "Profile")
+            val icons = listOf(Icons.Default.Home, Icons.Default.Search, Icons.Default.Person)
+
             Scaffold(
+                bottomBar = {
+                    NavigationBar {
+                        tabs.forEachIndexed { index, title ->
+                            NavigationBarItem(
+                                icon = { Icon(icons[index], contentDescription = title) },
+                                label = { Text(title) },
+                                selected = selectedTab == index,
+                                onClick = { selectedTab = index }
+                            )
+                        }
+                    }
+                },
                 floatingActionButton = {
-                    FloatingActionButton(onClick = onNavigateToCreateListing) {
-                        Icon(Icons.Default.Add, contentDescription = "Post a Room")
+                    if (selectedTab == 0) {
+                        FloatingActionButton(onClick = onNavigateToCreateListing) {
+                            Icon(Icons.Default.Add, contentDescription = "Post a Room")
+                        }
+                    } else if (selectedTab == 1) {
+                        FloatingActionButton(onClick = onNavigateToCreateRequirement) {
+                            Icon(Icons.Default.Add, contentDescription = "Post a Requirement")
+                        }
                     }
                 }
             ) { innerPadding ->
-                val feedViewModel: ListingFeedViewModel = viewModel(
-                    factory = ListingFeedViewModel.provideFactory(
-                        (LocalContext.current.applicationContext as NestmateApplication).container.listingRepository
-                    )
-                )
-                
-                Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Hi, ${state.profile?.displayName ?: "there"}!",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Row {
-                            TextButton(onClick = onNavigateToProfile) {
-                                Text("Profile")
-                            }
-                            TextButton(onClick = {
-                                viewModel.signOut()
-                                onSignOut()
-                            }) {
-                                Text("Sign out")
+                Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+                    when (selectedTab) {
+                        0 -> {
+                            val feedViewModel: ListingFeedViewModel = viewModel(
+                                factory = ListingFeedViewModel.provideFactory(container.listingRepository)
+                            )
+                            ListingFeedScreen(viewModel = feedViewModel, onListingClick = onNavigateToListingDetail)
+                        }
+                        1 -> {
+                            val reqViewModel: RequirementFeedViewModel = viewModel(
+                                factory = RequirementFeedViewModel.provideFactory(container.requirementRepository)
+                            )
+                            RequirementFeedScreen(viewModel = reqViewModel, onRequirementClick = onNavigateToRequirementDetail)
+                        }
+                        2 -> {
+                            Column(
+                                modifier = Modifier.fillMaxSize().padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text("Hi, ${state.profile?.displayName ?: "there"}!", style = MaterialTheme.typography.titleLarge)
+                                Spacer(Modifier.height(16.dp))
+                                Button(onClick = onNavigateToProfile) { Text("Edit Profile") }
+                                Spacer(Modifier.height(8.dp))
+                                OutlinedButton(onClick = { viewModel.signOut(); onSignOut() }) { Text("Sign out") }
                             }
                         }
                     }
-                    
-                    ListingFeedScreen(
-                        viewModel = feedViewModel,
-                        onListingClick = onNavigateToListingDetail,
-                        modifier = Modifier.weight(1f)
-                    )
                 }
             }
         }

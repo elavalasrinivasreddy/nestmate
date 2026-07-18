@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -11,13 +12,16 @@ import androidx.navigation.compose.rememberNavController
 import com.nestmate.app.NestmateApplication
 import com.nestmate.app.feature.auth.AuthScreen
 import com.nestmate.app.feature.home.HomeScreen
-import com.nestmate.app.feature.profile.ProfileScreen
 import com.nestmate.app.feature.listing.CreateEditListingViewModel
 import com.nestmate.app.feature.listing.CreateListingScreen
 import com.nestmate.app.feature.listing.ListingDetailScreen
 import com.nestmate.app.feature.listing.ListingDetailViewModel
+import com.nestmate.app.feature.profile.ProfileScreen
+import com.nestmate.app.feature.requirement.CreateEditRequirementViewModel
+import com.nestmate.app.feature.requirement.CreateRequirementScreen
+import com.nestmate.app.feature.requirement.RequirementDetailScreen
+import com.nestmate.app.feature.requirement.RequirementDetailViewModel
 import com.nestmate.app.feature.welcome.WelcomeScreen
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 /**
  * Single source of navigation. Start destination is gated on auth state:
@@ -66,7 +70,9 @@ fun NestmateNavHost(
                 },
                 onNavigateToProfile = { navController.navigate(Destination.Profile.route) },
                 onNavigateToCreateListing = { navController.navigate(Destination.CreateListing().route) },
-                onNavigateToListingDetail = { id -> navController.navigate(Destination.ListingDetail(id).route) }
+                onNavigateToListingDetail = { id -> navController.navigate(Destination.ListingDetail(id).route) },
+                onNavigateToCreateRequirement = { navController.navigate(Destination.CreateRequirement().route) },
+                onNavigateToRequirementDetail = { id -> navController.navigate(Destination.RequirementDetail(id).route) }
             )
         }
         composable(Destination.Profile.route) {
@@ -102,6 +108,35 @@ fun NestmateNavHost(
             ListingDetailScreen(
                 viewModel = detailViewModel,
                 onEdit = { navController.navigate(Destination.CreateListing(listingId).route) },
+                onDeleted = { navController.popBackStack() }
+            )
+        }
+        composable(Destination.CreateRequirement.route) { backStackEntry ->
+            val reqId = backStackEntry.arguments?.getString("id")
+            val createReqViewModel: CreateEditRequirementViewModel = viewModel(
+                factory = CreateEditRequirementViewModel.provideFactory(
+                    container.authRepository,
+                    container.requirementRepository,
+                    reqId
+                )
+            )
+            CreateRequirementScreen(
+                viewModel = createReqViewModel,
+                onSaved = { navController.popBackStack() }
+            )
+        }
+        composable(Destination.RequirementDetail.route) { backStackEntry ->
+            val reqId = backStackEntry.arguments?.getString("id") ?: return@composable
+            val reqDetailViewModel: RequirementDetailViewModel = viewModel(
+                factory = RequirementDetailViewModel.provideFactory(
+                    container.authRepository,
+                    container.requirementRepository,
+                    reqId
+                )
+            )
+            RequirementDetailScreen(
+                viewModel = reqDetailViewModel,
+                onEdit = { navController.navigate(Destination.CreateRequirement(reqId).route) },
                 onDeleted = { navController.popBackStack() }
             )
         }
