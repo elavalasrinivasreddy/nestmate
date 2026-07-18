@@ -47,10 +47,10 @@ Phases are sequenced so the app is **runnable and demoable at the end of each on
 **Deliverables:** start a conversation from a listing/requirement; real-time message thread; conversation list with last-message preview.
 **Exit:** two accounts can exchange messages in real time. Connected detail screens to messaging and inbox to dashboard.
 
-## Phase 8 — Bookmarks
+## Phase 8 — Bookmarks ✅ Done
 **Goal:** let users keep track.
 **Deliverables:** save/unsave listings and requirements; saved-items screen.
-**Exit:** bookmarks persist per user and render quickly.
+**Exit:** bookmarks persist per user and render quickly via snapshot denormalization. Accessible from the main dashboard.
 
 ## Phase 9 — Trust hardening (v1 gate)
 **Goal:** make it safe and solid before calling v1 done.

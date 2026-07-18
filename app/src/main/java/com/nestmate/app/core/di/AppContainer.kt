@@ -3,8 +3,10 @@ package com.nestmate.app.core.di
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.nestmate.app.data.repository.AuthRepository
+import com.nestmate.app.data.repository.BookmarkRepository
 import com.nestmate.app.data.repository.ChatRepository
 import com.nestmate.app.data.repository.FirebaseAuthRepository
+import com.nestmate.app.data.repository.FirestoreBookmarkRepository
 import com.nestmate.app.data.repository.FirestoreChatRepository
 import com.nestmate.app.data.repository.FirestoreListingRepository
 import com.nestmate.app.data.repository.FirestoreProfileRepository
@@ -23,6 +25,7 @@ interface AppContainer {
     val listingRepository: ListingRepository
     val requirementRepository: RequirementRepository
     val chatRepository: ChatRepository
+    val bookmarkRepository: BookmarkRepository
 }
 
 class DefaultAppContainer : AppContainer {
@@ -48,5 +51,9 @@ class DefaultAppContainer : AppContainer {
 
     override val chatRepository: ChatRepository by lazy {
         FirestoreChatRepository(firestore, authRepository, profileRepository)
+    }
+
+    override val bookmarkRepository: BookmarkRepository by lazy {
+        FirestoreBookmarkRepository(firestore)
     }
 }

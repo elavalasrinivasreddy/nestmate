@@ -2,7 +2,7 @@
 
 *The live view of where the build is. Update as phases move. Last updated: 2026-07-18.*
 
-**Current focus:** Phase 7 (Chat) is code-complete and build-verified (Firestore real-time streams, messaging UI, inbox). Next is Phase 8 (Bookmarks).
+**Current focus:** Phase 8 (Bookmarks) is code-complete and build-verified. Added 'Saved' tab to navigation and snapshot logic for instant rendering. Next is Phase 9 (Trust hardening / v1 gate).
 
 ## Legend
 `⬜ Not started` · `🟦 In progress` · `✅ Done` · `⛔ Blocked`
@@ -19,7 +19,7 @@
 | 5 | Requirement listings | ✅ Done | 2026-07-18 | 2026-07-18 | Created `requirements` collection. Built UI for Feed, Create/Edit, and Details. Added BottomNavigationBar to Dashboard to switch between Rooms and Seekers. |
 | 6 | Discovery (search + filters) | ✅ Done | 2026-07-18 | 2026-07-18 | Added `FilterState` and `ModalBottomSheet` UI to both feeds. Pivoted to client-side filtering via `Flow.combine` to avoid the combinatorial explosion of Firestore composite indexes. |
 | 7 | Chat | ✅ Done | 2026-07-18 | 2026-07-18 | `ChatRepository` implemented with real-time `messages` subcollection streams. `Inbox` and `MessageThread` UIs added. Linked from Listing/Requirement detail views. |
-| 8 | Bookmarks | ⬜ Not started | | | |
+| 8 | Bookmarks | ✅ Done | 2026-07-18 | 2026-07-18 | Added `Bookmark` model and `FirestoreBookmarkRepository`. Implemented `BookmarkListScreen` and added "Saved" tab. Wired favorite toggle to detail screens. |
 | 9 | Trust hardening (v1 gate) | ⬜ Not started | | | Lock Firestore rules; validation; report/block. |
 | 10 | Photos | ⛔ Blocked | | | Needs Firebase Storage (billing). |
 | 11 | Reviews & ratings | ⬜ Not started | | | Post-v1. |
@@ -47,3 +47,4 @@
 | 2026-07-18 | Phase 5: Added Requirement Listing functionality (demand side). Introduced `BottomNavigationBar` to `HomeScreen` to toggle between Vacancy and Requirement feeds. |
 | 2026-07-18 | Phase 6: Implemented Discovery features. Chose client-side filtering over server-side to avoid massive composite index requirements (adhered to advisory recommendation). |
 | 2026-07-18 | Phase 7: Added Real-time Chat functionality. Implemented `Conversation` and `Message` models, `FirestoreChatRepository`, and threaded UI. Integrated into navigation via detail screen CTAs and the Home dashboard inbox tab. |
+| 2026-07-18 | Phase 8: Bookmarks built out. Utilized snapshot data strategy for the bookmarks collection to ensure the UI renders instantaneously without requiring sequential document fetches. Appended 'Saved' view into the 5-item bottom bar. |

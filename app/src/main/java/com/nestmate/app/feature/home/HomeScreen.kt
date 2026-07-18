@@ -3,6 +3,7 @@ package com.nestmate.app.feature.home
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -21,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nestmate.app.NestmateApplication
+import com.nestmate.app.feature.bookmark.BookmarkListScreen
+import com.nestmate.app.feature.bookmark.BookmarkListViewModel
 import com.nestmate.app.feature.chat.ConversationListScreen
 import com.nestmate.app.feature.chat.ConversationListViewModel
 import com.nestmate.app.feature.listing.ListingFeedScreen
@@ -61,7 +64,6 @@ fun HomeScreen(
         }
 
         if (!state.hasProfile) {
-            // Onboarding State
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -102,8 +104,8 @@ fun HomeScreen(
             }
         } else {
             var selectedTab by remember { mutableStateOf(0) }
-            val tabs = listOf("Rooms", "Roommates", "Inbox", "Profile")
-            val icons = listOf(Icons.Default.Home, Icons.Default.Search, Icons.Default.Email, Icons.Default.Person)
+            val tabs = listOf("Rooms", "Seekers", "Saved", "Inbox", "Profile")
+            val icons = listOf(Icons.Default.Home, Icons.Default.Search, Icons.Default.Favorite, Icons.Default.Email, Icons.Default.Person)
 
             Scaffold(
                 bottomBar = {
@@ -145,6 +147,16 @@ fun HomeScreen(
                             RequirementFeedScreen(viewModel = reqViewModel, onRequirementClick = onNavigateToRequirementDetail)
                         }
                         2 -> {
+                            val bookmarkViewModel: BookmarkListViewModel = viewModel(
+                                factory = BookmarkListViewModel.provideFactory(container.authRepository, container.bookmarkRepository)
+                            )
+                            BookmarkListScreen(
+                                viewModel = bookmarkViewModel,
+                                onListingClick = onNavigateToListingDetail,
+                                onRequirementClick = onNavigateToRequirementDetail
+                            )
+                        }
+                        3 -> {
                             val inboxViewModel: ConversationListViewModel = viewModel(
                                 factory = ConversationListViewModel.provideFactory(container.chatRepository)
                             )
@@ -154,7 +166,7 @@ fun HomeScreen(
                                 onConversationClick = onNavigateToThread
                             )
                         }
-                        3 -> {
+                        4 -> {
                             Column(
                                 modifier = Modifier.fillMaxSize().padding(24.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,

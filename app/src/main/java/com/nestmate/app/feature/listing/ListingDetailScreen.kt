@@ -4,9 +4,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -70,6 +72,13 @@ fun ListingDetailScreen(
             TopAppBar(
                 title = { },
                 actions = {
+                    IconButton(onClick = viewModel::toggleBookmark) {
+                        Icon(
+                            imageVector = if (state.isBookmarked) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
+                            contentDescription = if (state.isBookmarked) "Remove Bookmark" else "Add Bookmark",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                     if (state.isOwner) {
                         IconButton(onClick = onEdit) {
                             Icon(Icons.Default.Edit, contentDescription = "Edit Listing")

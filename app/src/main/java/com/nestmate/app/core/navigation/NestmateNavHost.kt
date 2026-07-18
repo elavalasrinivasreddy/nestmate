@@ -106,6 +106,7 @@ fun NestmateNavHost(
                     container.authRepository,
                     container.listingRepository,
                     container.chatRepository,
+                    container.bookmarkRepository,
                     listingId
                 )
             )
@@ -139,6 +140,7 @@ fun NestmateNavHost(
                     container.authRepository,
                     container.requirementRepository,
                     container.chatRepository,
+                    container.bookmarkRepository,
                     reqId
                 )
             )
