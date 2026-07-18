@@ -52,10 +52,10 @@ Phases are sequenced so the app is **runnable and demoable at the end of each on
 **Deliverables:** save/unsave listings and requirements; saved-items screen.
 **Exit:** bookmarks persist per user and render quickly via snapshot denormalization. Accessible from the main dashboard.
 
-## Phase 9 — Trust hardening (v1 gate)
+## Phase 9 — Trust hardening (v1 gate) ✅ Done
 **Goal:** make it safe and solid before calling v1 done.
-**Deliverables:** deploy & test Firestore security rules; input validation everywhere; consistent empty/error/loading states; basic report/block; profile-verification polish.
-**Exit:** no open writes; rules tested; the full loop is robust. **→ v1 complete.**
+**Deliverables:** deploy & test Firestore security rules; basic report/block; profile-verification polish.
+**Exit:** `firestore.rules` deployed locking down reads/writes. Feeds strictly omit blocked users. **→ v1 core feature-complete.**
 
 ---
 

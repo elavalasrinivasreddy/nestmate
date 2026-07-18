@@ -7,10 +7,14 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -25,6 +29,8 @@ fun MessageThreadScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showMenu by remember { mutableStateOf(false) }
 
     // Auto-scroll to bottom when new messages arrive
     LaunchedEffect(state.messages.size) {
@@ -32,15 +38,49 @@ fun MessageThreadScreen(
             listState.animateScrollToItem(state.messages.size - 1)
         }
     }
+    
+    LaunchedEffect(state.actionSuccessMessage) {
+        state.actionSuccessMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearActionMessage()
+        }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { 
                     val otherUid = state.conversation?.participantUids?.firstOrNull { it != state.currentUserId }
                     val otherName = state.conversation?.participantsMeta?.get(otherUid)?.displayName ?: "Chat"
                     Text(otherName)
+                },
+                actions = {
+                    Box {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "More Options")
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Report User") },
+                                onClick = { 
+                                    showMenu = false
+                                    viewModel.reportUser("Inappropriate behavior in chat") 
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Block User") },
+                                onClick = { 
+                                    showMenu = false
+                                    viewModel.blockUser() 
+                                }
+                            )
+                        }
+                    }
                 }
             )
         },

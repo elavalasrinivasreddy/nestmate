@@ -136,13 +136,21 @@ fun HomeScreen(
                     when (selectedTab) {
                         0 -> {
                             val feedViewModel: ListingFeedViewModel = viewModel(
-                                factory = ListingFeedViewModel.provideFactory(container.listingRepository)
+                                factory = ListingFeedViewModel.provideFactory(
+                                    container.authRepository,
+                                    container.profileRepository,
+                                    container.listingRepository
+                                )
                             )
                             ListingFeedScreen(viewModel = feedViewModel, onListingClick = onNavigateToListingDetail)
                         }
                         1 -> {
                             val reqViewModel: RequirementFeedViewModel = viewModel(
-                                factory = RequirementFeedViewModel.provideFactory(container.requirementRepository)
+                                factory = RequirementFeedViewModel.provideFactory(
+                                    container.authRepository,
+                                    container.profileRepository,
+                                    container.requirementRepository
+                                )
                             )
                             RequirementFeedScreen(viewModel = reqViewModel, onRequirementClick = onNavigateToRequirementDetail)
                         }
@@ -158,7 +166,11 @@ fun HomeScreen(
                         }
                         3 -> {
                             val inboxViewModel: ConversationListViewModel = viewModel(
-                                factory = ConversationListViewModel.provideFactory(container.chatRepository)
+                                factory = ConversationListViewModel.provideFactory(
+                                    container.authRepository,
+                                    container.profileRepository,
+                                    container.chatRepository
+                                )
                             )
                             ConversationListScreen(
                                 viewModel = inboxViewModel,

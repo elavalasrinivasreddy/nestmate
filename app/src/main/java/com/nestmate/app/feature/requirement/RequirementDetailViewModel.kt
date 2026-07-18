@@ -13,6 +13,7 @@ import com.nestmate.app.data.repository.AuthRepository
 import com.nestmate.app.data.repository.BookmarkRepository
 import com.nestmate.app.data.repository.ChatRepository
 import com.nestmate.app.data.repository.RequirementRepository
+import com.nestmate.app.data.repository.TrustRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +26,7 @@ class RequirementDetailViewModel(
     private val requirementRepository: RequirementRepository,
     private val chatRepository: ChatRepository,
     private val bookmarkRepository: BookmarkRepository,
+    private val trustRepository: TrustRepository,
     private val requirementId: String
 ) : ViewModel() {
 
@@ -35,7 +37,8 @@ class RequirementDetailViewModel(
         val isOwner: Boolean = false,
         val isDeleted: Boolean = false,
         val isBookmarked: Boolean = false,
-        val conversationIdToLaunch: String? = null
+        val conversationIdToLaunch: String? = null,
+        val actionSuccessMessage: String? = null
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -125,10 +128,31 @@ class RequirementDetailViewModel(
             }
         }
     }
-
-    fun onChatLaunched() {
-        _uiState.update { it.copy(conversationIdToLaunch = null) }
+    
+    fun reportUser(reason: String) {
+        val ownerUid = _uiState.value.requirement?.seekerUid ?: return
+        _uiState.update { it.copy(isLoading = true) }
+        viewModelScope.launch {
+            when (val result = trustRepository.reportUser(ownerUid, reason, ContextType.REQUIREMENT, requirementId)) {
+                is DataResult.Success -> _uiState.update { it.copy(isLoading = false, actionSuccessMessage = "Report submitted.") }
+                is DataResult.Error -> _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
+            }
+        }
     }
+
+    fun blockUser() {
+        val ownerUid = _uiState.value.requirement?.seekerUid ?: return
+        _uiState.update { it.copy(isLoading = true) }
+        viewModelScope.launch {
+            when (val result = trustRepository.blockUser(ownerUid)) {
+                is DataResult.Success -> _uiState.update { it.copy(isLoading = false, actionSuccessMessage = "User blocked.") }
+                is DataResult.Error -> _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
+            }
+        }
+    }
+
+    fun clearActionMessage() = _uiState.update { it.copy(actionSuccessMessage = null) }
+    fun onChatLaunched() = _uiState.update { it.copy(conversationIdToLaunch = null) }
 
     companion object {
         fun provideFactory(
@@ -136,11 +160,12 @@ class RequirementDetailViewModel(
             requirementRepository: RequirementRepository,
             chatRepository: ChatRepository,
             bookmarkRepository: BookmarkRepository,
+            trustRepository: TrustRepository,
             requirementId: String
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                RequirementDetailViewModel(authRepository, requirementRepository, chatRepository, bookmarkRepository, requirementId) as T
+                RequirementDetailViewModel(authRepository, requirementRepository, chatRepository, bookmarkRepository, trustRepository, requirementId) as T
         }
     }
 }

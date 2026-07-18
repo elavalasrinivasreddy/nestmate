@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.nestmate.app.core.common.DataResult
 import com.nestmate.app.data.model.Listing
 import com.nestmate.app.data.model.RoomType
+import com.nestmate.app.data.repository.AuthRepository
 import com.nestmate.app.data.repository.ListingRepository
+import com.nestmate.app.data.repository.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,6 +17,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ListingFeedViewModel(
+    private val authRepository: AuthRepository,
+    private val profileRepository: ProfileRepository,
     private val listingRepository: ListingRepository
 ) : ViewModel() {
 
@@ -39,24 +43,33 @@ class ListingFeedViewModel(
 
     init {
         viewModelScope.launch {
+            val currentUid = authRepository.currentUser?.uid ?: return@launch
+            
             combine(
                 listingRepository.getActiveListingsStream(),
+                profileRepository.getProfileStream(currentUid),
                 filterStateFlow
-            ) { result, filters ->
-                when (result) {
-                    is DataResult.Success -> {
-                        val filtered = result.data.filter { listing ->
-                            val matchCity = filters.city.isBlank() || listing.location.city.equals(filters.city.trim(), ignoreCase = true)
-                            val matchRoomType = filters.roomType == null || listing.roomType == filters.roomType
-                            val matchRent = filters.maxRent.toDoubleOrNull()?.let { max -> listing.rentAmount <= max } ?: true
-                            matchCity && matchRoomType && matchRent
-                        }
-                        _uiState.update { it.copy(isLoading = false, listings = filtered, filters = filters, errorMessage = null) }
-                    }
-                    is DataResult.Error -> {
-                        _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
-                    }
+            ) { listingResult, profileResult, filters ->
+                if (listingResult is DataResult.Error) {
+                    _uiState.update { it.copy(isLoading = false, errorMessage = listingResult.message) }
+                    return@combine
                 }
+                
+                val listings = (listingResult as? DataResult.Success)?.data ?: emptyList()
+                val profile = (profileResult as? DataResult.Success)?.data
+                val blockedUids = profile?.blockedUids ?: emptyList()
+
+                val filtered = listings.filter { listing ->
+                    // 1. Trust filtering: omit blocked users
+                    if (listing.ownerUid in blockedUids) return@filter false
+                    
+                    // 2. Discovery filtering
+                    val matchCity = filters.city.isBlank() || listing.location.city.equals(filters.city.trim(), ignoreCase = true)
+                    val matchRoomType = filters.roomType == null || listing.roomType == filters.roomType
+                    val matchRent = filters.maxRent.toDoubleOrNull()?.let { max -> listing.rentAmount <= max } ?: true
+                    matchCity && matchRoomType && matchRent
+                }
+                _uiState.update { it.copy(isLoading = false, listings = filtered, filters = filters, errorMessage = null) }
             }.collect {}
         }
     }
@@ -76,11 +89,13 @@ class ListingFeedViewModel(
 
     companion object {
         fun provideFactory(
+            authRepository: AuthRepository,
+            profileRepository: ProfileRepository,
             listingRepository: ListingRepository
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                ListingFeedViewModel(listingRepository) as T
+                ListingFeedViewModel(authRepository, profileRepository, listingRepository) as T
         }
     }
 }

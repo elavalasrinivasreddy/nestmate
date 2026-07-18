@@ -13,6 +13,7 @@ import com.nestmate.app.data.repository.AuthRepository
 import com.nestmate.app.data.repository.BookmarkRepository
 import com.nestmate.app.data.repository.ChatRepository
 import com.nestmate.app.data.repository.ListingRepository
+import com.nestmate.app.data.repository.TrustRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +26,7 @@ class ListingDetailViewModel(
     private val listingRepository: ListingRepository,
     private val chatRepository: ChatRepository,
     private val bookmarkRepository: BookmarkRepository,
+    private val trustRepository: TrustRepository,
     private val listingId: String
 ) : ViewModel() {
 
@@ -35,7 +37,8 @@ class ListingDetailViewModel(
         val isOwner: Boolean = false,
         val isDeleted: Boolean = false,
         val isBookmarked: Boolean = false,
-        val conversationIdToLaunch: String? = null
+        val conversationIdToLaunch: String? = null,
+        val actionSuccessMessage: String? = null
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -126,9 +129,30 @@ class ListingDetailViewModel(
         }
     }
     
-    fun onChatLaunched() {
-        _uiState.update { it.copy(conversationIdToLaunch = null) }
+    fun reportUser(reason: String) {
+        val ownerUid = _uiState.value.listing?.ownerUid ?: return
+        _uiState.update { it.copy(isLoading = true) }
+        viewModelScope.launch {
+            when (val result = trustRepository.reportUser(ownerUid, reason, ContextType.LISTING, listingId)) {
+                is DataResult.Success -> _uiState.update { it.copy(isLoading = false, actionSuccessMessage = "Report submitted.") }
+                is DataResult.Error -> _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
+            }
+        }
     }
+
+    fun blockUser() {
+        val ownerUid = _uiState.value.listing?.ownerUid ?: return
+        _uiState.update { it.copy(isLoading = true) }
+        viewModelScope.launch {
+            when (val result = trustRepository.blockUser(ownerUid)) {
+                is DataResult.Success -> _uiState.update { it.copy(isLoading = false, actionSuccessMessage = "User blocked.") }
+                is DataResult.Error -> _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
+            }
+        }
+    }
+
+    fun clearActionMessage() = _uiState.update { it.copy(actionSuccessMessage = null) }
+    fun onChatLaunched() = _uiState.update { it.copy(conversationIdToLaunch = null) }
 
     companion object {
         fun provideFactory(
@@ -136,11 +160,12 @@ class ListingDetailViewModel(
             listingRepository: ListingRepository,
             chatRepository: ChatRepository,
             bookmarkRepository: BookmarkRepository,
+            trustRepository: TrustRepository,
             listingId: String
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                ListingDetailViewModel(authRepository, listingRepository, chatRepository, bookmarkRepository, listingId) as T
+                ListingDetailViewModel(authRepository, listingRepository, chatRepository, bookmarkRepository, trustRepository, listingId) as T
         }
     }
 }

@@ -8,11 +8,15 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +34,8 @@ fun ListingDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showMenu by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.isDeleted) {
         if (state.isDeleted) {
@@ -41,6 +47,13 @@ fun ListingDetailScreen(
         state.conversationIdToLaunch?.let {
             onMessageClick(it)
             viewModel.onChatLaunched()
+        }
+    }
+
+    LaunchedEffect(state.actionSuccessMessage) {
+        state.actionSuccessMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearActionMessage()
         }
     }
 
@@ -68,6 +81,7 @@ fun ListingDetailScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { },
@@ -85,6 +99,31 @@ fun ListingDetailScreen(
                         }
                         IconButton(onClick = viewModel::deleteListing) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete Listing")
+                        }
+                    } else {
+                        Box {
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "More Options")
+                            }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Report Listing") },
+                                    onClick = { 
+                                        showMenu = false
+                                        viewModel.reportUser("Inappropriate content") 
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Block User") },
+                                    onClick = { 
+                                        showMenu = false
+                                        viewModel.blockUser() 
+                                    }
+                                )
+                            }
                         }
                     }
                 }

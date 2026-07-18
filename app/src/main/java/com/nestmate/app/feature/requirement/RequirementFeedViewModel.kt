@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.nestmate.app.core.common.DataResult
 import com.nestmate.app.data.model.Requirement
 import com.nestmate.app.data.model.RoomType
+import com.nestmate.app.data.repository.AuthRepository
+import com.nestmate.app.data.repository.ProfileRepository
 import com.nestmate.app.data.repository.RequirementRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,6 +17,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class RequirementFeedViewModel(
+    private val authRepository: AuthRepository,
+    private val profileRepository: ProfileRepository,
     private val requirementRepository: RequirementRepository
 ) : ViewModel() {
 
@@ -39,24 +43,33 @@ class RequirementFeedViewModel(
 
     init {
         viewModelScope.launch {
+            val currentUid = authRepository.currentUser?.uid ?: return@launch
+
             combine(
                 requirementRepository.getActiveRequirementsStream(),
+                profileRepository.getProfileStream(currentUid),
                 filterStateFlow
-            ) { result, filters ->
-                when (result) {
-                    is DataResult.Success -> {
-                        val filtered = result.data.filter { req ->
-                            val matchCity = filters.city.isBlank() || req.preferredLocations.any { it.equals(filters.city.trim(), ignoreCase = true) }
-                            val matchRoomType = filters.roomType == null || req.roomType == filters.roomType
-                            val matchRent = filters.minRent.toDoubleOrNull()?.let { min -> req.budgetMax >= min } ?: true
-                            matchCity && matchRoomType && matchRent
-                        }
-                        _uiState.update { it.copy(isLoading = false, requirements = filtered, filters = filters, errorMessage = null) }
-                    }
-                    is DataResult.Error -> {
-                        _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
-                    }
+            ) { reqResult, profileResult, filters ->
+                if (reqResult is DataResult.Error) {
+                    _uiState.update { it.copy(isLoading = false, errorMessage = reqResult.message) }
+                    return@combine
                 }
+
+                val requirements = (reqResult as? DataResult.Success)?.data ?: emptyList()
+                val profile = (profileResult as? DataResult.Success)?.data
+                val blockedUids = profile?.blockedUids ?: emptyList()
+
+                val filtered = requirements.filter { req ->
+                    // 1. Trust filtering: omit blocked users
+                    if (req.seekerUid in blockedUids) return@filter false
+
+                    // 2. Discovery filtering
+                    val matchCity = filters.city.isBlank() || req.preferredLocations.any { it.equals(filters.city.trim(), ignoreCase = true) }
+                    val matchRoomType = filters.roomType == null || req.roomType == filters.roomType
+                    val matchRent = filters.minRent.toDoubleOrNull()?.let { min -> req.budgetMax >= min } ?: true
+                    matchCity && matchRoomType && matchRent
+                }
+                _uiState.update { it.copy(isLoading = false, requirements = filtered, filters = filters, errorMessage = null) }
             }.collect {}
         }
     }
@@ -76,11 +89,13 @@ class RequirementFeedViewModel(
 
     companion object {
         fun provideFactory(
+            authRepository: AuthRepository,
+            profileRepository: ProfileRepository,
             requirementRepository: RequirementRepository
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                RequirementFeedViewModel(requirementRepository) as T
+                RequirementFeedViewModel(authRepository, profileRepository, requirementRepository) as T
         }
     }
 }

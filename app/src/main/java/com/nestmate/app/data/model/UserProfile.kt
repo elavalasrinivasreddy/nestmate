@@ -10,6 +10,7 @@ data class UserProfile(
     val preferredLocations: List<String> = emptyList(),
     val lifestyle: Lifestyle = Lifestyle(),
     val verification: Verification = Verification(),
+    val blockedUids: List<String> = emptyList(),
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

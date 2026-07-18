@@ -2,7 +2,7 @@
 
 *The live view of where the build is. Update as phases move. Last updated: 2026-07-18.*
 
-**Current focus:** Phase 8 (Bookmarks) is code-complete and build-verified. Added 'Saved' tab to navigation and snapshot logic for instant rendering. Next is Phase 9 (Trust hardening / v1 gate).
+**Current focus:** Phase 9 (Trust hardening / v1 gate) is code-complete and build-verified. Added Report/Block user flows and client-side omission of blocked user content. The v1 core is officially fully featured! Next is Phase 10 (Photos - blocked on billing).
 
 ## Legend
 `⬜ Not started` · `🟦 In progress` · `✅ Done` · `⛔ Blocked`
@@ -20,7 +20,7 @@
 | 6 | Discovery (search + filters) | ✅ Done | 2026-07-18 | 2026-07-18 | Added `FilterState` and `ModalBottomSheet` UI to both feeds. Pivoted to client-side filtering via `Flow.combine` to avoid the combinatorial explosion of Firestore composite indexes. |
 | 7 | Chat | ✅ Done | 2026-07-18 | 2026-07-18 | `ChatRepository` implemented with real-time `messages` subcollection streams. `Inbox` and `MessageThread` UIs added. Linked from Listing/Requirement detail views. |
 | 8 | Bookmarks | ✅ Done | 2026-07-18 | 2026-07-18 | Added `Bookmark` model and `FirestoreBookmarkRepository`. Implemented `BookmarkListScreen` and added "Saved" tab. Wired favorite toggle to detail screens. |
-| 9 | Trust hardening (v1 gate) | ⬜ Not started | | | Lock Firestore rules; validation; report/block. |
+| 9 | Trust hardening (v1 gate) | ✅ Done | 2026-07-18 | 2026-07-18 | Deployed `firestore.rules` (including report-only rules). Added `TrustRepository` and `Report` model. Added `...` overflow menu to detail/chat screens for reporting and blocking. Feed ViewModels omit content from `blockedUids`. v1 Core is complete! |
 | 10 | Photos | ⛔ Blocked | | | Needs Firebase Storage (billing). |
 | 11 | Reviews & ratings | ⬜ Not started | | | Post-v1. |
 | 12 | AI layer | ⬜ Not started | | | Post-v1; the differentiator. |
@@ -48,3 +48,4 @@
 | 2026-07-18 | Phase 6: Implemented Discovery features. Chose client-side filtering over server-side to avoid massive composite index requirements (adhered to advisory recommendation). |
 | 2026-07-18 | Phase 7: Added Real-time Chat functionality. Implemented `Conversation` and `Message` models, `FirestoreChatRepository`, and threaded UI. Integrated into navigation via detail screen CTAs and the Home dashboard inbox tab. |
 | 2026-07-18 | Phase 8: Bookmarks built out. Utilized snapshot data strategy for the bookmarks collection to ensure the UI renders instantaneously without requiring sequential document fetches. Appended 'Saved' view into the 5-item bottom bar. |
+| 2026-07-18 | Phase 9: Trust hardening. Established `firestore.rules`. Updated `UserProfile` to track `blockedUids`. Fed user profile streams to all feed ViewModels to filter out blocked accounts locally. V1 core features are now complete. |

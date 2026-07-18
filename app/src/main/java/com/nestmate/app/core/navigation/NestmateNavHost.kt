@@ -107,6 +107,7 @@ fun NestmateNavHost(
                     container.listingRepository,
                     container.chatRepository,
                     container.bookmarkRepository,
+                    container.trustRepository,
                     listingId
                 )
             )
@@ -141,6 +142,7 @@ fun NestmateNavHost(
                     container.requirementRepository,
                     container.chatRepository,
                     container.bookmarkRepository,
+                    container.trustRepository,
                     reqId
                 )
             )
@@ -159,6 +161,7 @@ fun NestmateNavHost(
                 factory = MessageThreadViewModel.provideFactory(
                     container.authRepository,
                     container.chatRepository,
+                    container.trustRepository,
                     conversationId
                 )
             )

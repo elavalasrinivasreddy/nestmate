@@ -11,9 +11,11 @@ import com.nestmate.app.data.repository.FirestoreChatRepository
 import com.nestmate.app.data.repository.FirestoreListingRepository
 import com.nestmate.app.data.repository.FirestoreProfileRepository
 import com.nestmate.app.data.repository.FirestoreRequirementRepository
+import com.nestmate.app.data.repository.FirestoreTrustRepository
 import com.nestmate.app.data.repository.ListingRepository
 import com.nestmate.app.data.repository.ProfileRepository
 import com.nestmate.app.data.repository.RequirementRepository
+import com.nestmate.app.data.repository.TrustRepository
 
 /**
  * Manual dependency container (no Hilt — see docs/DECISIONS.md, ADR-014).
@@ -26,6 +28,7 @@ interface AppContainer {
     val requirementRepository: RequirementRepository
     val chatRepository: ChatRepository
     val bookmarkRepository: BookmarkRepository
+    val trustRepository: TrustRepository
 }
 
 class DefaultAppContainer : AppContainer {
@@ -55,5 +58,9 @@ class DefaultAppContainer : AppContainer {
 
     override val bookmarkRepository: BookmarkRepository by lazy {
         FirestoreBookmarkRepository(firestore)
+    }
+
+    override val trustRepository: TrustRepository by lazy {
+        FirestoreTrustRepository(firestore, authRepository)
     }
 }
