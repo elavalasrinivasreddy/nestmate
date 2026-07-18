@@ -37,10 +37,10 @@ Phases are sequenced so the app is **runnable and demoable at the end of each on
 **Deliverables:** create/edit/delete a requirement; requirements feed; detail.
 **Exit:** a seeker can post what they want; room-holders can browse it via the dual-feed dashboard.
 
-## Phase 6 — Discovery
+## Phase 6 — Discovery ✅ Done
 **Goal:** make the marketplace usable.
 **Deliverables:** search + filters by location, budget range, and room type, across both listings and requirements; empty/loading states.
-**Exit:** filtered queries return correct results with the needed Firestore indexes in place.
+**Exit:** filtered queries return correct results. Filtering implemented client-side to avoid Firestore composite index explosion.
 
 ## Phase 7 — Chat
 **Goal:** connect the two sides.

@@ -4,17 +4,22 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nestmate.app.data.model.Requirement
+import com.nestmate.app.data.model.RoomType
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RequirementFeedScreen(
     viewModel: RequirementFeedViewModel,
@@ -23,39 +28,129 @@ fun RequirementFeedScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    if (state.isLoading) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+    if (state.isFilterSheetVisible) {
+        ModalBottomSheet(
+            onDismissRequest = viewModel::hideFilterSheet
+        ) {
+            FilterSheetContent(
+                initialFilters = state.filters,
+                onApply = viewModel::applyFilters,
+                onClear = viewModel::clearFilters
+            )
         }
-        return
     }
 
-    if (state.errorMessage != null) {
-        Box(modifier = modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-            SelectionContainer {
-                Text(text = state.errorMessage!!, color = MaterialTheme.colorScheme.error)
+    Column(modifier = modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            FilledTonalIconButton(onClick = viewModel::showFilterSheet) {
+                Icon(Icons.Default.Search, contentDescription = "Filter")
             }
         }
-        return
-    }
 
-    if (state.requirements.isEmpty()) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No active requirements found.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (state.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            return
         }
-        return
-    }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+        if (state.errorMessage != null) {
+            Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                SelectionContainer {
+                    Text(text = state.errorMessage!!, color = MaterialTheme.colorScheme.error)
+                }
+            }
+            return
+        }
+
+        if (state.requirements.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No seekers match your filters.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            return
+        }
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(state.requirements, key = { it.id }) { req ->
+                RequirementCard(
+                    requirement = req,
+                    onClick = { onRequirementClick(req.id) }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun FilterSheetContent(
+    initialFilters: RequirementFeedViewModel.FilterState,
+    onApply: (city: String, roomType: RoomType?, minRent: String) -> Unit,
+    onClear: () -> Unit
+) {
+    var city by remember { mutableStateOf(initialFilters.city) }
+    var roomType by remember { mutableStateOf(initialFilters.roomType) }
+    var minRent by remember { mutableStateOf(initialFilters.minRent) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp)
+            .padding(bottom = 24.dp), // Extra padding for safe area
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(state.requirements, key = { it.id }) { req ->
-            RequirementCard(
-                requirement = req,
-                onClick = { onRequirementClick(req.id) }
-            )
+        Text("Filter Seekers", style = MaterialTheme.typography.titleLarge)
+        
+        OutlinedTextField(
+            value = city,
+            onValueChange = { city = it },
+            label = { Text("City") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+
+        OutlinedTextField(
+            value = minRent,
+            onValueChange = { minRent = it },
+            label = { Text("My Room's Rent (Min Budget)") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            singleLine = true
+        )
+
+        Text("Room Type", style = MaterialTheme.typography.titleMedium)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            RoomType.entries.forEach { type ->
+                FilterChip(
+                    selected = roomType == type,
+                    onClick = { roomType = if (roomType == type) null else type },
+                    label = { Text(type.name) }
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            OutlinedButton(onClick = onClear, modifier = Modifier.weight(1f)) {
+                Text("Clear")
+            }
+            Button(
+                onClick = { onApply(city, roomType, minRent) },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Apply")
+            }
         }
     }
 }

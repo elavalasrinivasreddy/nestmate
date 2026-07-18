@@ -5,11 +5,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.nestmate.app.core.common.DataResult
 import com.nestmate.app.data.model.Listing
+import com.nestmate.app.data.model.RoomType
 import com.nestmate.app.data.repository.ListingRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -17,32 +18,60 @@ class ListingFeedViewModel(
     private val listingRepository: ListingRepository
 ) : ViewModel() {
 
+    data class FilterState(
+        val city: String = "",
+        val roomType: RoomType? = null,
+        val maxRent: String = ""
+    )
+
     data class UiState(
         val isLoading: Boolean = true,
         val listings: List<Listing> = emptyList(),
+        val filters: FilterState = FilterState(),
+        val isFilterSheetVisible: Boolean = false,
         val errorMessage: String? = null
     )
 
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    init {
-        loadListings()
-    }
+    private val filterStateFlow = MutableStateFlow(FilterState())
 
-    private fun loadListings() {
+    init {
         viewModelScope.launch {
-            listingRepository.getActiveListingsStream().collectLatest { result ->
+            combine(
+                listingRepository.getActiveListingsStream(),
+                filterStateFlow
+            ) { result, filters ->
                 when (result) {
                     is DataResult.Success -> {
-                        _uiState.update { it.copy(isLoading = false, listings = result.data, errorMessage = null) }
+                        val filtered = result.data.filter { listing ->
+                            val matchCity = filters.city.isBlank() || listing.location.city.equals(filters.city.trim(), ignoreCase = true)
+                            val matchRoomType = filters.roomType == null || listing.roomType == filters.roomType
+                            val matchRent = filters.maxRent.toDoubleOrNull()?.let { max -> listing.rentAmount <= max } ?: true
+                            matchCity && matchRoomType && matchRent
+                        }
+                        _uiState.update { it.copy(isLoading = false, listings = filtered, filters = filters, errorMessage = null) }
                     }
                     is DataResult.Error -> {
                         _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
                     }
                 }
-            }
+            }.collect {}
         }
+    }
+
+    fun showFilterSheet() = _uiState.update { it.copy(isFilterSheetVisible = true) }
+    fun hideFilterSheet() = _uiState.update { it.copy(isFilterSheetVisible = false) }
+
+    fun applyFilters(city: String, roomType: RoomType?, maxRent: String) {
+        filterStateFlow.value = FilterState(city, roomType, maxRent)
+        hideFilterSheet()
+    }
+
+    fun clearFilters() {
+        filterStateFlow.value = FilterState()
+        hideFilterSheet()
     }
 
     companion object {

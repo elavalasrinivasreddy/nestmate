@@ -2,7 +2,7 @@
 
 *The live view of where the build is. Update as phases move. Last updated: 2026-07-18.*
 
-**Current focus:** Phase 5 (Requirement listings) is code-complete and build-verified. Added BottomNavigationBar to Home for dual feeds. Next is Phase 6 (Discovery: Search & Filters).
+**Current focus:** Phase 6 (Discovery) is code-complete and build-verified (client-side filters for location, room type, and budget). Next is Phase 7 (Chat).
 
 ## Legend
 `⬜ Not started` · `🟦 In progress` · `✅ Done` · `⛔ Blocked`
@@ -17,7 +17,7 @@
 | 3 | Profile | ✅ Done | 2026-07-18 | 2026-07-18 | Firestore `users` collection setup. Modern UI with Material 3 chips/segmented controls for enums. Home screen intercepts users without profiles for mandatory onboarding. Build verified. |
 | 4 | Vacancy listings | ✅ Done | 2026-07-18 | 2026-07-18 | Created `listings` collection. Feed, details, and creation/editing forms active. Added explicit error surfacing for Firestore index creation (via `SelectionContainer`). |
 | 5 | Requirement listings | ✅ Done | 2026-07-18 | 2026-07-18 | Created `requirements` collection. Built UI for Feed, Create/Edit, and Details. Added BottomNavigationBar to Dashboard to switch between Rooms and Seekers. |
-| 6 | Discovery (search + filters) | ⬜ Not started | | | Will need Firestore composite indexes. |
+| 6 | Discovery (search + filters) | ✅ Done | 2026-07-18 | 2026-07-18 | Added `FilterState` and `ModalBottomSheet` UI to both feeds. Pivoted to client-side filtering via `Flow.combine` to avoid the combinatorial explosion of Firestore composite indexes. |
 | 7 | Chat | ⬜ Not started | | | Realtime via Firestore listeners. |
 | 8 | Bookmarks | ⬜ Not started | | | |
 | 9 | Trust hardening (v1 gate) | ⬜ Not started | | | Lock Firestore rules; validation; report/block. |
@@ -45,3 +45,4 @@
 | 2026-07-18 | Phase 3: Profile setup integrated with Firestore. Onboarding flow routes new users to profile creation automatically from the Home screen. Used `material-icons-core` instead of `extended` to prevent APK bloat. |
 | 2026-07-18 | Phase 4: Added Vacancy Listing functionality. Implemented `Listing` model, `FirestoreListingRepository`, and associated ViewModels. Handled requirement for Firestore composite indexes by ensuring error URLs are copyable. Fixed missing Edit/Delete owner actions. |
 | 2026-07-18 | Phase 5: Added Requirement Listing functionality (demand side). Introduced `BottomNavigationBar` to `HomeScreen` to toggle between Vacancy and Requirement feeds. |
+| 2026-07-18 | Phase 6: Implemented Discovery features. Chose client-side filtering over server-side to avoid massive composite index requirements (adhered to advisory recommendation). |
