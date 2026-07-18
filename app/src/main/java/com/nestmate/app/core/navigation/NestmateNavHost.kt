@@ -1,28 +1,71 @@
 package com.nestmate.app.core.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.nestmate.app.NestmateApplication
+import com.nestmate.app.feature.auth.AuthScreen
+import com.nestmate.app.feature.auth.PhoneVerifyScreen
+import com.nestmate.app.feature.home.HomeScreen
 import com.nestmate.app.feature.welcome.WelcomeScreen
 
 /**
- * Single source of navigation for the app. The graph grows phase by phase.
+ * Single source of navigation. Start destination is gated on auth state:
+ * signed-in users go straight to Home, everyone else starts at Welcome.
+ * The graph grows phase by phase.
  */
 @Composable
 fun NestmateNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
+    val context = LocalContext.current
+    val container = remember { (context.applicationContext as NestmateApplication).container }
+
+    val startDestination = if (container.authRepository.currentUser != null) {
+        Destination.Home.route
+    } else {
+        Destination.Welcome.route
+    }
+
     NavHost(
         navController = navController,
-        startDestination = Destination.Welcome.route,
+        startDestination = startDestination,
         modifier = modifier
     ) {
         composable(Destination.Welcome.route) {
-            WelcomeScreen()
+            WelcomeScreen(
+                onGetStarted = { navController.navigate(Destination.Auth.route) }
+            )
+        }
+        composable(Destination.Auth.route) {
+            AuthScreen(
+                onAuthenticated = {
+                    navController.navigate(Destination.Home.route) {
+                        popUpTo(Destination.Welcome.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(Destination.Home.route) {
+            HomeScreen(
+                onSignOut = {
+                    navController.navigate(Destination.Welcome.route) {
+                        popUpTo(Destination.Home.route) { inclusive = true }
+                    }
+                },
+                onVerifyPhone = { navController.navigate(Destination.PhoneVerify.route) }
+            )
+        }
+        composable(Destination.PhoneVerify.route) {
+            PhoneVerifyScreen(
+                onVerified = { navController.popBackStack() }
+            )
         }
     }
 }

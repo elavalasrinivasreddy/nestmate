@@ -1,16 +1,22 @@
 package com.nestmate.app.core.di
 
+import com.google.firebase.auth.FirebaseAuth
+import com.nestmate.app.data.repository.AuthRepository
+import com.nestmate.app.data.repository.FirebaseAuthRepository
+
 /**
- * Manual dependency container (no Hilt for now — see docs/DECISIONS.md, ADR-014).
- *
- * Dependencies are added here as features land:
- *   - Phase 2: FirebaseAuth wiring + AuthRepository
- *   - Phase 3+: Profile / Listing / Requirement / Chat / Bookmark repositories
+ * Manual dependency container (no Hilt — see docs/DECISIONS.md, ADR-014).
+ * Dependencies are added here as features land.
  */
 interface AppContainer {
-    // Intentionally empty until Phase 2 introduces the first repository.
+    val authRepository: AuthRepository
 }
 
 class DefaultAppContainer : AppContainer {
-    // Construct Firebase-backed dependencies here starting Phase 2.
+
+    private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+
+    override val authRepository: AuthRepository by lazy {
+        FirebaseAuthRepository(firebaseAuth)
+    }
 }

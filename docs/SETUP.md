@@ -1,6 +1,6 @@
 # Nestmate — Setup
 
-*Living document. Last updated: 2026-06-15.*
+*Living document. Last updated: 2026-07-18.*
 
 ## Prerequisites
 
@@ -41,18 +41,18 @@ Real SMS is capped at **10/day** until a billing account is added to the project
 
 ### SHA-1 (needed for phone auth on a real device)
 
-From the project root:
+Debug keystore fingerprint (generated 2026-07-18 via `./gradlew signingReport` — regenerate if the debug keystore ever changes):
 
-```bash
-./gradlew signingReport
+```
+SHA1: BC:8A:C5:74:10:94:C9:A7:F0:6B:0D:CA:DD:44:12:AA:95:3F:AE:CA
 ```
 
-Copy the **debug** `SHA-1`, then add it in Firebase console → Project settings → Your apps → Nestmate (Android) → **Add fingerprint**. (Claude's sandbox can't run Gradle on this drive, so run this on your machine.)
+Add it in Firebase console → Project settings → Your apps → Nestmate (Android) → **Add fingerprint**. That console step still needs you — no API access to it from here.
 
 ## Build & run
 
 1. Open the project in Android Studio; let Gradle sync.
-2. When Claude adds dependencies (Phase 1+), Android Studio will prompt to **Sync Now** — click it (Claude can't press IDE buttons).
+2. When Claude adds dependencies, Android Studio will prompt to **Sync Now** — click it (Claude can't press IDE buttons). Claude *can* run `./gradlew` directly (compile/assemble/test/lint — see ADR-020) to verify each phase before handing it back, but only you can Run on a device/emulator or drive the Firebase console.
 3. Pick a device/emulator (API 24+) and **Run**.
 
 ## Git
@@ -69,3 +69,5 @@ If Android Studio doesn't show the repo afterward, set it manually: **Settings �
 - **Gradle sync fails after dependency changes** → File → Invalidate Caches / Restart, then re-sync.
 - **Phone auth fails on device** → confirm the SHA-1 is added in Firebase and you're using the registered test number in dev.
 - **Min SDK errors** → device/emulator must be API 24+.
+- **Sync fails mentioning "variant API" or google-services** → do **not** set `android.enableLegacyVariantApi`; it's removed in AGP 9 and setting it now hard-fails the build (see ADR-017). If google-services itself fails to apply, temporarily set `org.gradle.configuration-cache=false` and re-sync.
+- **Sign-in / sign-up fails** → confirm **Email/Password** is enabled in Firebase console → Authentication → Sign-in method.

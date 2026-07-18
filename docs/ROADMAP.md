@@ -1,6 +1,6 @@
 # Nestmate — Roadmap
 
-*Living document. Last updated: 2026-06-15. Live progress lives in `STATUS_TRACKER.md`.*
+*Living document. Last updated: 2026-07-18. Live progress lives in `STATUS_TRACKER.md`.*
 
 Phases are sequenced so the app is **runnable and demoable at the end of each one**. v1 = Phases 1–9 (the trust-first two-sided core). Everything after is post-v1.
 
@@ -17,10 +17,10 @@ Phases are sequenced so the app is **runnable and demoable at the end of each on
 **Exit:** app builds and runs showing the Welcome screen. *(Requires you to run a Gradle sync.)*
 **Note:** Firebase + the `google-services` plugin were intentionally moved to **Phase 2** (first use) to isolate AGP-9 plugin risk (ADR-015).
 
-## Phase 2 — Authentication
+## Phase 2 — Authentication ✅ Done
 **Goal:** real accounts.
-**Deliverables:** add the `google-services` plugin + Firebase BOM (Auth) and verify Firebase initializes; email/password sign-up & sign-in; phone verification (dev test number); auth-state gating (signed-out → auth flow, signed-in → app); sign-out.
-**Exit:** can create an account, verify phone, and stay signed in across restarts.
+**Deliverables:** `google-services` plugin + Firebase BOM (Auth). **2a:** email/password sign-up & sign-in, auth-state gating (signed-out → Welcome/Auth, signed-in → Home), sign-out. **2b:** phone verification (`PhoneAuthProvider`) reachable from Home, linking the phone credential to the signed-in account (ADR-019).
+**Exit:** create an account and stay signed in across restarts (2a) — met. Phone verification works (2b) — code-complete and build-verified; real-device SMS/test-number run is a manual step for you (needs the Firebase console **Phone** provider enabled + the SHA-1 in `SETUP.md`).
 
 ## Phase 3 — Profile
 **Goal:** trustworthy identity.
@@ -72,4 +72,4 @@ Phases are sequenced so the app is **runnable and demoable at the end of each on
 
 - **Firebase Storage** off (billing) → photos deferred to Phase 10.
 - **Phone auth** uses the dev test number (+91 829…, code `123456`); real SMS is capped at 10/day until billing is added.
-- **SHA-1** fingerprint must be added to the Firebase Android app before real phone auth works on device (command in `SETUP.md`).
+- **SHA-1** fingerprint generated (`SETUP.md`) but must still be added to the Firebase Android app in-console before real phone auth works on device.
