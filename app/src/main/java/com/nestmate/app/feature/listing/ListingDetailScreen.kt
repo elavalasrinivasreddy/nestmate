@@ -6,6 +6,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,6 +24,7 @@ fun ListingDetailScreen(
     viewModel: ListingDetailViewModel,
     onEdit: () -> Unit,
     onDeleted: () -> Unit,
+    onMessageClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -30,6 +32,13 @@ fun ListingDetailScreen(
     LaunchedEffect(state.isDeleted) {
         if (state.isDeleted) {
             onDeleted()
+        }
+    }
+
+    LaunchedEffect(state.conversationIdToLaunch) {
+        state.conversationIdToLaunch?.let {
+            onMessageClick(it)
+            viewModel.onChatLaunched()
         }
     }
 
@@ -58,10 +67,10 @@ fun ListingDetailScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            if (state.isOwner) {
-                TopAppBar(
-                    title = { },
-                    actions = {
+            TopAppBar(
+                title = { },
+                actions = {
+                    if (state.isOwner) {
                         IconButton(onClick = onEdit) {
                             Icon(Icons.Default.Edit, contentDescription = "Edit Listing")
                         }
@@ -69,6 +78,15 @@ fun ListingDetailScreen(
                             Icon(Icons.Default.Delete, contentDescription = "Delete Listing")
                         }
                     }
+                }
+            )
+        },
+        floatingActionButton = {
+            if (!state.isOwner) {
+                ExtendedFloatingActionButton(
+                    onClick = viewModel::startChat,
+                    icon = { Icon(Icons.Default.Email, contentDescription = "Message") },
+                    text = { Text("Message") }
                 )
             }
         }

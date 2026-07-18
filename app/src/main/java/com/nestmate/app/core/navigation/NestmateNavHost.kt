@@ -11,6 +11,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.nestmate.app.NestmateApplication
 import com.nestmate.app.feature.auth.AuthScreen
+import com.nestmate.app.feature.chat.MessageThreadScreen
+import com.nestmate.app.feature.chat.MessageThreadViewModel
 import com.nestmate.app.feature.home.HomeScreen
 import com.nestmate.app.feature.listing.CreateEditListingViewModel
 import com.nestmate.app.feature.listing.CreateListingScreen
@@ -72,7 +74,8 @@ fun NestmateNavHost(
                 onNavigateToCreateListing = { navController.navigate(Destination.CreateListing().route) },
                 onNavigateToListingDetail = { id -> navController.navigate(Destination.ListingDetail(id).route) },
                 onNavigateToCreateRequirement = { navController.navigate(Destination.CreateRequirement().route) },
-                onNavigateToRequirementDetail = { id -> navController.navigate(Destination.RequirementDetail(id).route) }
+                onNavigateToRequirementDetail = { id -> navController.navigate(Destination.RequirementDetail(id).route) },
+                onNavigateToThread = { id -> navController.navigate(Destination.MessageThread(id).route) }
             )
         }
         composable(Destination.Profile.route) {
@@ -102,13 +105,17 @@ fun NestmateNavHost(
                 factory = ListingDetailViewModel.provideFactory(
                     container.authRepository,
                     container.listingRepository,
+                    container.chatRepository,
                     listingId
                 )
             )
             ListingDetailScreen(
                 viewModel = detailViewModel,
                 onEdit = { navController.navigate(Destination.CreateListing(listingId).route) },
-                onDeleted = { navController.popBackStack() }
+                onDeleted = { navController.popBackStack() },
+                onMessageClick = { conversationId ->
+                    navController.navigate(Destination.MessageThread(conversationId).route)
+                }
             )
         }
         composable(Destination.CreateRequirement.route) { backStackEntry ->
@@ -131,13 +138,30 @@ fun NestmateNavHost(
                 factory = RequirementDetailViewModel.provideFactory(
                     container.authRepository,
                     container.requirementRepository,
+                    container.chatRepository,
                     reqId
                 )
             )
             RequirementDetailScreen(
                 viewModel = reqDetailViewModel,
                 onEdit = { navController.navigate(Destination.CreateRequirement(reqId).route) },
-                onDeleted = { navController.popBackStack() }
+                onDeleted = { navController.popBackStack() },
+                onMessageClick = { conversationId ->
+                    navController.navigate(Destination.MessageThread(conversationId).route)
+                }
+            )
+        }
+        composable(Destination.MessageThread.route) { backStackEntry ->
+            val conversationId = backStackEntry.arguments?.getString("conversationId") ?: return@composable
+            val threadViewModel: MessageThreadViewModel = viewModel(
+                factory = MessageThreadViewModel.provideFactory(
+                    container.authRepository,
+                    container.chatRepository,
+                    conversationId
+                )
+            )
+            MessageThreadScreen(
+                viewModel = threadViewModel
             )
         }
     }

@@ -11,6 +11,11 @@ interface ProfileRepository {
     fun getProfileStream(uid: String): Flow<DataResult<UserProfile?>>
 
     /**
+     * Fetches a user's profile a single time. Useful for populating chat participant metadata.
+     */
+    suspend fun getProfile(uid: String): DataResult<UserProfile?>
+
+    /**
      * Creates or updates the user profile.
      */
     suspend fun saveProfile(profile: UserProfile): DataResult<Unit>

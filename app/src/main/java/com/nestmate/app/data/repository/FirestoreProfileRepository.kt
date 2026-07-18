@@ -29,12 +29,24 @@ class FirestoreProfileRepository(
                     trySend(DataResult.Error("Failed to parse profile data", e))
                 }
             } else {
-                // Document doesn't exist
                 trySend(DataResult.Success(null))
             }
         }
 
         awaitClose { subscription.remove() }
+    }
+
+    override suspend fun getProfile(uid: String): DataResult<UserProfile?> {
+        return try {
+            val snapshot = usersCollection.document(uid).get().await()
+            if (snapshot.exists()) {
+                DataResult.Success(snapshot.toObject(UserProfile::class.java))
+            } else {
+                DataResult.Success(null)
+            }
+        } catch (e: Exception) {
+            DataResult.Error(e.message ?: "Failed to fetch profile", e)
+        }
     }
 
     override suspend fun saveProfile(profile: UserProfile): DataResult<Unit> {

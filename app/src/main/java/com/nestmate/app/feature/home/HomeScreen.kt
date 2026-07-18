@@ -3,6 +3,7 @@ package com.nestmate.app.feature.home
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -20,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nestmate.app.NestmateApplication
+import com.nestmate.app.feature.chat.ConversationListScreen
+import com.nestmate.app.feature.chat.ConversationListViewModel
 import com.nestmate.app.feature.listing.ListingFeedScreen
 import com.nestmate.app.feature.listing.ListingFeedViewModel
 import com.nestmate.app.feature.requirement.RequirementFeedScreen
@@ -33,6 +36,7 @@ fun HomeScreen(
     onNavigateToListingDetail: (String) -> Unit,
     onNavigateToCreateRequirement: () -> Unit,
     onNavigateToRequirementDetail: (String) -> Unit,
+    onNavigateToThread: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel(
         factory = HomeViewModel.provideFactory(
@@ -57,6 +61,7 @@ fun HomeScreen(
         }
 
         if (!state.hasProfile) {
+            // Onboarding State
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -97,8 +102,8 @@ fun HomeScreen(
             }
         } else {
             var selectedTab by remember { mutableStateOf(0) }
-            val tabs = listOf("Rooms", "Roommates", "Profile")
-            val icons = listOf(Icons.Default.Home, Icons.Default.Search, Icons.Default.Person)
+            val tabs = listOf("Rooms", "Roommates", "Inbox", "Profile")
+            val icons = listOf(Icons.Default.Home, Icons.Default.Search, Icons.Default.Email, Icons.Default.Person)
 
             Scaffold(
                 bottomBar = {
@@ -140,6 +145,16 @@ fun HomeScreen(
                             RequirementFeedScreen(viewModel = reqViewModel, onRequirementClick = onNavigateToRequirementDetail)
                         }
                         2 -> {
+                            val inboxViewModel: ConversationListViewModel = viewModel(
+                                factory = ConversationListViewModel.provideFactory(container.chatRepository)
+                            )
+                            ConversationListScreen(
+                                viewModel = inboxViewModel,
+                                authRepository = container.authRepository,
+                                onConversationClick = onNavigateToThread
+                            )
+                        }
+                        3 -> {
                             Column(
                                 modifier = Modifier.fillMaxSize().padding(24.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,

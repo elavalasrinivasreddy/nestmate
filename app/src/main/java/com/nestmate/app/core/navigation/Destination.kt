@@ -9,6 +9,12 @@ sealed class Destination(val route: String) {
     data object Auth : Destination("auth")
     data object Home : Destination("home")
     data object Profile : Destination("profile")
+    data object Inbox : Destination("inbox")
+    data class MessageThread(val conversationId: String) : Destination("thread/$conversationId") {
+        companion object {
+            const val route = "thread/{conversationId}"
+        }
+    }
     data class CreateListing(val id: String? = null) : Destination(
         if (id != null) "create_listing?id=$id" else "create_listing"
     ) {

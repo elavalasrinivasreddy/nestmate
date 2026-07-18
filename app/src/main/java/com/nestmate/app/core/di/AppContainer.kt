@@ -3,7 +3,9 @@ package com.nestmate.app.core.di
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.nestmate.app.data.repository.AuthRepository
+import com.nestmate.app.data.repository.ChatRepository
 import com.nestmate.app.data.repository.FirebaseAuthRepository
+import com.nestmate.app.data.repository.FirestoreChatRepository
 import com.nestmate.app.data.repository.FirestoreListingRepository
 import com.nestmate.app.data.repository.FirestoreProfileRepository
 import com.nestmate.app.data.repository.FirestoreRequirementRepository
@@ -20,6 +22,7 @@ interface AppContainer {
     val profileRepository: ProfileRepository
     val listingRepository: ListingRepository
     val requirementRepository: RequirementRepository
+    val chatRepository: ChatRepository
 }
 
 class DefaultAppContainer : AppContainer {
@@ -41,5 +44,9 @@ class DefaultAppContainer : AppContainer {
 
     override val requirementRepository: RequirementRepository by lazy {
         FirestoreRequirementRepository(firestore)
+    }
+
+    override val chatRepository: ChatRepository by lazy {
+        FirestoreChatRepository(firestore, authRepository, profileRepository)
     }
 }

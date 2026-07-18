@@ -42,10 +42,10 @@ Phases are sequenced so the app is **runnable and demoable at the end of each on
 **Deliverables:** search + filters by location, budget range, and room type, across both listings and requirements; empty/loading states.
 **Exit:** filtered queries return correct results. Filtering implemented client-side to avoid Firestore composite index explosion.
 
-## Phase 7 — Chat
+## Phase 7 — Chat ✅ Done
 **Goal:** connect the two sides.
 **Deliverables:** start a conversation from a listing/requirement; real-time message thread; conversation list with last-message preview.
-**Exit:** two accounts can exchange messages in real time.
+**Exit:** two accounts can exchange messages in real time. Connected detail screens to messaging and inbox to dashboard.
 
 ## Phase 8 — Bookmarks
 **Goal:** let users keep track.
