@@ -27,10 +27,10 @@ Phases are sequenced so the app is **runnable and demoable at the end of each on
 **Deliverables:** create/edit profile (name, type, occupation, bio, preferred locations, lifestyle); show verification badges (phone verified).
 **Exit:** profile persists to `users/{uid}` and is editable. Onboarding flow implemented requiring profile creation upon first sign-in.
 
-## Phase 4 — Vacancy listings ("I have a room")
+## Phase 4 — Vacancy listings ("I have a room") ✅ Done
 **Goal:** the supply side.
 **Deliverables:** create/edit/delete a vacancy; listings feed; listing detail.
-**Exit:** a room-holder can post, edit, delete; others can browse and open a listing.
+**Exit:** a room-holder can post, edit, delete; others can browse and open a listing. Handled composite-index requirement gracefully via copyable error UI.
 
 ## Phase 5 — Requirement listings ("I need a room")
 **Goal:** the demand side — the two-way differentiator.

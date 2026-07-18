@@ -12,7 +12,12 @@ import com.nestmate.app.NestmateApplication
 import com.nestmate.app.feature.auth.AuthScreen
 import com.nestmate.app.feature.home.HomeScreen
 import com.nestmate.app.feature.profile.ProfileScreen
+import com.nestmate.app.feature.listing.CreateEditListingViewModel
+import com.nestmate.app.feature.listing.CreateListingScreen
+import com.nestmate.app.feature.listing.ListingDetailScreen
+import com.nestmate.app.feature.listing.ListingDetailViewModel
 import com.nestmate.app.feature.welcome.WelcomeScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 /**
  * Single source of navigation. Start destination is gated on auth state:
@@ -59,9 +64,9 @@ fun NestmateNavHost(
                         popUpTo(Destination.Home.route) { inclusive = true }
                     }
                 },
-                onNavigateToProfile = {
-                    navController.navigate(Destination.Profile.route)
-                }
+                onNavigateToProfile = { navController.navigate(Destination.Profile.route) },
+                onNavigateToCreateListing = { navController.navigate(Destination.CreateListing.route) },
+                onNavigateToListingDetail = { id -> navController.navigate(Destination.ListingDetail(id).route) }
             )
         }
         composable(Destination.Profile.route) {
@@ -69,6 +74,30 @@ fun NestmateNavHost(
                 onProfileSaved = {
                     navController.popBackStack()
                 }
+            )
+        }
+        composable(Destination.CreateListing.route) {
+            val createListingViewModel: CreateEditListingViewModel = viewModel(
+                factory = CreateEditListingViewModel.provideFactory(
+                    container.authRepository,
+                    container.listingRepository
+                )
+            )
+            CreateListingScreen(
+                viewModel = createListingViewModel,
+                onSaved = { navController.popBackStack() }
+            )
+        }
+        composable(Destination.ListingDetail.route) { backStackEntry ->
+            val listingId = backStackEntry.arguments?.getString("id") ?: return@composable
+            val detailViewModel: ListingDetailViewModel = viewModel(
+                factory = ListingDetailViewModel.provideFactory(
+                    container.listingRepository,
+                    listingId
+                )
+            )
+            ListingDetailScreen(
+                viewModel = detailViewModel
             )
         }
     }

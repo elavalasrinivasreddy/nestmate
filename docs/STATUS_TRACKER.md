@@ -2,7 +2,7 @@
 
 *The live view of where the build is. Update as phases move. Last updated: 2026-07-18.*
 
-**Current focus:** Phase 3 (Profile) is code-complete and build-verified (Firestore integration, profile creation/edit, and onboarding routing). Next is Phase 4 (Vacancy listings).
+**Current focus:** Phase 4 (Vacancy listings) is code-complete and build-verified (Firestore models, Feed UI, Create/Edit form, Listing details). Next is Phase 5 (Requirement listings).
 
 ## Legend
 `⬜ Not started` · `🟦 In progress` · `✅ Done` · `⛔ Blocked`
@@ -15,7 +15,7 @@
 | 1 | Foundation (deps, DI, theme, nav) | ✅ Done | 2026-06-15 | 2026-06-15 | Libraries only (Navigation, Lifecycle-Compose, Coroutines). Manual DI — no Hilt (ADR-014). Branded theme + Welcome screen. Code complete; first sync verifies. |
 | 2 | Authentication | ✅ Done | 2026-06-15 | 2026-07-18 | `google-services` plugin + Firebase Auth, phone auth (`PhoneAuthProvider`), auth gating, sign-out. Code/UI completely switched to use Phone Auth exclusively (ADR-021). Both build/dex/lint clean; ViewModel logic unit-tested. Real-device signup + phone SMS flow still needs your hands. |
 | 3 | Profile | ✅ Done | 2026-07-18 | 2026-07-18 | Firestore `users` collection setup. Modern UI with Material 3 chips/segmented controls for enums. Home screen intercepts users without profiles for mandatory onboarding. Build verified. |
-| 4 | Vacancy listings | ⬜ Not started | | | |
+| 4 | Vacancy listings | ✅ Done | 2026-07-18 | 2026-07-18 | Created `listings` collection. Feed, details, and creation/editing forms active. Added explicit error surfacing for Firestore index creation (via `SelectionContainer`). |
 | 5 | Requirement listings | ⬜ Not started | | | |
 | 6 | Discovery (search + filters) | ⬜ Not started | | | Will need Firestore composite indexes. |
 | 7 | Chat | ⬜ Not started | | | Realtime via Firestore listeners. |
@@ -43,3 +43,4 @@
 | 2026-06-15 | Phase 2: phone authentication setup; email auth initially setup but later removed in favor of OTP (ADR-021). |
 | 2026-07-18 | Corrected ADR-017: `android.enableLegacyVariantApi` is removed in AGP 9 and breaks the build if set — never actually needed. Phase 2: phone authentication via OTP shipped (ADR-021). Confirmed this sandbox can run Gradle directly (ADR-020) — build/test/lint now verify every phase before it's marked done. |
 | 2026-07-18 | Phase 3: Profile setup integrated with Firestore. Onboarding flow routes new users to profile creation automatically from the Home screen. Used `material-icons-core` instead of `extended` to prevent APK bloat. |
+| 2026-07-18 | Phase 4: Added Vacancy Listing functionality. Implemented `Listing` model, `FirestoreListingRepository`, and associated ViewModels. Handled requirement for Firestore composite indexes by ensuring error URLs are copyable. |

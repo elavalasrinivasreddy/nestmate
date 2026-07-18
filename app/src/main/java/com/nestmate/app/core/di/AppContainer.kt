@@ -4,7 +4,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.nestmate.app.data.repository.AuthRepository
 import com.nestmate.app.data.repository.FirebaseAuthRepository
+import com.nestmate.app.data.repository.FirestoreListingRepository
 import com.nestmate.app.data.repository.FirestoreProfileRepository
+import com.nestmate.app.data.repository.ListingRepository
 import com.nestmate.app.data.repository.ProfileRepository
 
 /**
@@ -14,6 +16,7 @@ import com.nestmate.app.data.repository.ProfileRepository
 interface AppContainer {
     val authRepository: AuthRepository
     val profileRepository: ProfileRepository
+    val listingRepository: ListingRepository
 }
 
 class DefaultAppContainer : AppContainer {
@@ -27,5 +30,9 @@ class DefaultAppContainer : AppContainer {
 
     override val profileRepository: ProfileRepository by lazy {
         FirestoreProfileRepository(firestore)
+    }
+
+    override val listingRepository: ListingRepository by lazy {
+        FirestoreListingRepository(firestore)
     }
 }

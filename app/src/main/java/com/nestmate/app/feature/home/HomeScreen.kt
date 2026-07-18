@@ -1,19 +1,9 @@
 package com.nestmate.app.feature.home
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -24,11 +14,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nestmate.app.NestmateApplication
+import com.nestmate.app.feature.listing.ListingFeedScreen
+import com.nestmate.app.feature.listing.ListingFeedViewModel
 
 @Composable
 fun HomeScreen(
     onSignOut: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onNavigateToCreateListing: () -> Unit,
+    onNavigateToListingDetail: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel(
         factory = HomeViewModel.provideFactory(
@@ -91,45 +85,49 @@ fun HomeScreen(
                 }
             }
         } else {
-            // Dashboard State
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "Hi, ${state.profile?.displayName ?: "there"}!",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "Signed in with ${state.profile?.phoneNumber ?: "your phone"}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(Modifier.height(24.dp))
-                Text(
-                    text = "Profiles, room listings, and the two-sided feed land in the next phases.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(Modifier.height(24.dp))
-                Button(onClick = onNavigateToProfile) {
-                    Text("Edit Profile")
-                }
-                Spacer(Modifier.height(12.dp))
-                OutlinedButton(
-                    onClick = {
-                        viewModel.signOut()
-                        onSignOut()
+            // Dashboard State - Listing Feed
+            Scaffold(
+                floatingActionButton = {
+                    FloatingActionButton(onClick = onNavigateToCreateListing) {
+                        Icon(Icons.Default.Add, contentDescription = "Post a Room")
                     }
-                ) {
-                    Text("Sign out")
+                }
+            ) { innerPadding ->
+                val feedViewModel: ListingFeedViewModel = viewModel(
+                    factory = ListingFeedViewModel.provideFactory(
+                        (LocalContext.current.applicationContext as NestmateApplication).container.listingRepository
+                    )
+                )
+                
+                Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Hi, ${state.profile?.displayName ?: "there"}!",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Row {
+                            TextButton(onClick = onNavigateToProfile) {
+                                Text("Profile")
+                            }
+                            TextButton(onClick = {
+                                viewModel.signOut()
+                                onSignOut()
+                            }) {
+                                Text("Sign out")
+                            }
+                        }
+                    }
+                    
+                    ListingFeedScreen(
+                        viewModel = feedViewModel,
+                        onListingClick = onNavigateToListingDetail,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }

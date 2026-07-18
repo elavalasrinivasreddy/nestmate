@@ -15,6 +15,7 @@
 
 | ID | Date | Sev | Area | Description | Status | Resolution / commit |
 |----|------|-----|------|-------------|--------|---------------------|
+| B-001 | 2026-07-18 | S3 | Profile | `ProfileViewModel` uses `addSnapshotListener` for `loadProfile`. If the cache syncs or a remote update happens while the user is typing in the edit form, it will overwrite their unsaved UI state. Should use a single `get()` for edit flows. | Open | — |
 | —  | —    | —   | —    | *No bugs logged yet.* | — | — |
 
 ## Resolved
