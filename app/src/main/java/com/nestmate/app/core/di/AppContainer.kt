@@ -1,8 +1,11 @@
 package com.nestmate.app.core.di
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.nestmate.app.data.repository.AuthRepository
 import com.nestmate.app.data.repository.FirebaseAuthRepository
+import com.nestmate.app.data.repository.FirestoreProfileRepository
+import com.nestmate.app.data.repository.ProfileRepository
 
 /**
  * Manual dependency container (no Hilt — see docs/DECISIONS.md, ADR-014).
@@ -10,13 +13,19 @@ import com.nestmate.app.data.repository.FirebaseAuthRepository
  */
 interface AppContainer {
     val authRepository: AuthRepository
+    val profileRepository: ProfileRepository
 }
 
 class DefaultAppContainer : AppContainer {
 
     private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+    private val firestore: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
 
     override val authRepository: AuthRepository by lazy {
         FirebaseAuthRepository(firebaseAuth)
+    }
+
+    override val profileRepository: ProfileRepository by lazy {
+        FirestoreProfileRepository(firestore)
     }
 }

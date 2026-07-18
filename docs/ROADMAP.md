@@ -22,10 +22,10 @@ Phases are sequenced so the app is **runnable and demoable at the end of each on
 **Deliverables:** `google-services` plugin + Firebase BOM (Auth). **2:** phone auth (OTP) using `PhoneAuthProvider` reachable from `AuthScreen` to handle signup and sign-in directly. Auth-state gating (signed-out → Welcome/Auth, signed-in → Home), sign-out.
 **Exit:** Phone authentication works, creating an account and staying signed in across restarts. Real-device SMS/test-number run is a manual step for you (needs the Firebase console **Phone** provider enabled + the SHA-1 in `SETUP.md`).
 
-## Phase 3 — Profile
+## Phase 3 — Profile ✅ Done
 **Goal:** trustworthy identity.
-**Deliverables:** create/edit profile (name, type, occupation, bio, preferred locations, lifestyle); show verification badges (email/phone).
-**Exit:** profile persists to `users/{uid}` and is editable.
+**Deliverables:** create/edit profile (name, type, occupation, bio, preferred locations, lifestyle); show verification badges (phone verified).
+**Exit:** profile persists to `users/{uid}` and is editable. Onboarding flow implemented requiring profile creation upon first sign-in.
 
 ## Phase 4 — Vacancy listings ("I have a room")
 **Goal:** the supply side.

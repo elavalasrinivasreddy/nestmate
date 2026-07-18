@@ -11,6 +11,7 @@ import androidx.navigation.compose.rememberNavController
 import com.nestmate.app.NestmateApplication
 import com.nestmate.app.feature.auth.AuthScreen
 import com.nestmate.app.feature.home.HomeScreen
+import com.nestmate.app.feature.profile.ProfileScreen
 import com.nestmate.app.feature.welcome.WelcomeScreen
 
 /**
@@ -57,6 +58,16 @@ fun NestmateNavHost(
                     navController.navigate(Destination.Welcome.route) {
                         popUpTo(Destination.Home.route) { inclusive = true }
                     }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Destination.Profile.route)
+                }
+            )
+        }
+        composable(Destination.Profile.route) {
+            ProfileScreen(
+                onProfileSaved = {
+                    navController.popBackStack()
                 }
             )
         }
