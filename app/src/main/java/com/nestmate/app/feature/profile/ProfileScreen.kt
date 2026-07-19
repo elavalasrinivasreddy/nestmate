@@ -2,7 +2,6 @@ package com.nestmate.app.feature.profile
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -13,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,17 +48,26 @@ fun ProfileScreen(
         return
     }
 
+    var newLocation by remember { mutableStateOf("") }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
             Surface(
                 color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 4.dp,
-                shadowElevation = 8.dp
+                tonalElevation = 8.dp,
+                shadowElevation = 16.dp
             ) {
                 PaddingValues(16.dp)
                 Button(
-                    onClick = viewModel::saveProfile,
+                    onClick = {
+                        // Fix for disappearing locations: Auto-add any pending text in the field
+                        if (newLocation.isNotBlank()) {
+                            viewModel.addLocation(newLocation.trim())
+                            newLocation = ""
+                        }
+                        viewModel.saveProfile()
+                    },
                     enabled = state.canSave,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -72,7 +81,7 @@ fun ProfileScreen(
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text("Save Profile")
+                        Text("Save Profile", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -82,165 +91,195 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                Text(
-                    text = "Your Profile",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                if (state.profile.verification.phoneVerified) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Verified",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Phone Verified (${state.profile.phoneNumber})",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-
-            if (state.errorMessage != null) {
-                item {
+                Column(modifier = Modifier.padding(vertical = 8.dp)) {
                     Text(
-                        text = state.errorMessage!!,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
+                        text = "Your Profile",
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
-                }
-            }
-
-            item {
-                OutlinedTextField(
-                    value = state.profile.displayName,
-                    onValueChange = viewModel::onNameChange,
-                    label = { Text("Full Name *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
-                )
-            }
-
-            item {
-                OutlinedTextField(
-                    value = state.profile.bio,
-                    onValueChange = viewModel::onBioChange,
-                    label = { Text("Bio") },
-                    placeholder = { Text("Tell us a bit about yourself...") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3,
-                    maxLines = 5,
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
-                )
-            }
-
-            item {
-                SectionTitle("I am a...")
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    UserType.entries.forEach { type ->
-                        FilterChip(
-                            selected = state.profile.userType == type,
-                            onClick = { viewModel.onUserTypeChange(type) },
-                            label = { Text(type.name.replace("_", " ")) }
-                        )
-                    }
-                }
-            }
-
-            item {
-                SectionTitle("Occupation")
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OccupationType.entries.forEach { type ->
-                        FilterChip(
-                            selected = state.profile.occupationType == type,
-                            onClick = { viewModel.onOccupationChange(type) },
-                            label = { Text(type.name) }
-                        )
-                    }
-                }
-            }
-
-            item {
-                SectionTitle("Preferred Locations")
-                var newLocation by remember { mutableStateOf("") }
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedTextField(
-                        value = newLocation,
-                        onValueChange = { newLocation = it },
-                        label = { Text("Add city/area") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    IconButton(onClick = {
-                        viewModel.addLocation(newLocation.trim())
-                        newLocation = ""
-                    }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Location")
-                    }
-                }
-                
-                if (state.profile.preferredLocations.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        state.profile.preferredLocations.forEach { loc ->
-                            InputChip(
-                                selected = true,
-                                onClick = { viewModel.removeLocation(loc) },
-                                label = { Text(loc) },
-                                trailingIcon = {
-                                    Icon(Icons.Default.Close, contentDescription = "Remove", modifier = Modifier.size(16.dp))
-                                }
+                    if (state.profile.verification.phoneVerified) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Verified",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Phone Verified (${state.profile.phoneNumber})",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
                 }
             }
 
+            if (state.errorMessage != null) {
+                item {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = state.errorMessage!!,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+            }
+
             item {
-                SectionTitle("Lifestyle")
-                
-                LifestyleSelector(
-                    title = "Smoking",
-                    options = SmokingPreference.entries,
-                    selected = state.profile.lifestyle.smoking,
-                    onSelect = viewModel::onSmokingChange
-                )
-                
-                LifestyleSelector(
-                    title = "Food",
-                    options = FoodPreference.entries,
-                    selected = state.profile.lifestyle.food,
-                    onSelect = viewModel::onFoodChange
-                )
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        SectionTitle("Basic Info")
+                        OutlinedTextField(
+                            value = state.profile.displayName,
+                            onValueChange = viewModel::onNameChange,
+                            label = { Text("Full Name *") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
+                        )
 
-                LifestyleSelector(
-                    title = "Sleep Schedule",
-                    options = SleepSchedule.entries,
-                    selected = state.profile.lifestyle.sleepSchedule,
-                    onSelect = viewModel::onSleepChange
-                )
+                        OutlinedTextField(
+                            value = state.profile.bio,
+                            onValueChange = viewModel::onBioChange,
+                            label = { Text("Bio") },
+                            placeholder = { Text("Tell us a bit about yourself...") },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 3,
+                            maxLines = 5,
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+                        )
+                    }
+                }
+            }
 
-                LifestyleSelector(
-                    title = "Cleanliness",
-                    options = Cleanliness.entries,
-                    selected = state.profile.lifestyle.cleanliness,
-                    onSelect = viewModel::onCleanlinessChange
-                )
+            item {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        SectionTitle("I am a...")
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            UserType.entries.forEach { type ->
+                                FilterChip(
+                                    selected = state.profile.userType == type,
+                                    onClick = { viewModel.onUserTypeChange(type) },
+                                    label = { Text(type.name.replace("_", " ")) }
+                                )
+                            }
+                        }
+
+                        SectionTitle("Occupation")
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OccupationType.entries.forEach { type ->
+                                FilterChip(
+                                    selected = state.profile.occupationType == type,
+                                    onClick = { viewModel.onOccupationChange(type) },
+                                    label = { Text(type.name) }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        SectionTitle("Preferred Locations")
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = newLocation,
+                                onValueChange = { newLocation = it },
+                                label = { Text("Add city/area") },
+                                modifier = Modifier.weight(1f),
+                                singleLine = true
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            FilledIconButton(
+                                onClick = {
+                                    viewModel.addLocation(newLocation.trim())
+                                    newLocation = ""
+                                },
+                                modifier = Modifier.padding(top = 8.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Add Location")
+                            }
+                        }
+                        
+                        if (state.profile.preferredLocations.isNotEmpty()) {
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                state.profile.preferredLocations.forEach { loc ->
+                                    InputChip(
+                                        selected = true,
+                                        onClick = { viewModel.removeLocation(loc) },
+                                        label = { Text(loc) },
+                                        trailingIcon = {
+                                            Icon(Icons.Default.Close, contentDescription = "Remove", modifier = Modifier.size(16.dp))
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        SectionTitle("Lifestyle")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        LifestyleSelector(
+                            title = "Smoking",
+                            options = SmokingPreference.entries,
+                            selected = state.profile.lifestyle.smoking,
+                            onSelect = viewModel::onSmokingChange
+                        )
+                        
+                        LifestyleSelector(
+                            title = "Drinking",
+                            options = DrinkingPreference.entries,
+                            selected = state.profile.lifestyle.drinking,
+                            onSelect = viewModel::onDrinkingChange
+                        )
+                        
+                        LifestyleSelector(
+                            title = "Food",
+                            options = FoodPreference.entries,
+                            selected = state.profile.lifestyle.food,
+                            onSelect = viewModel::onFoodChange
+                        )
+
+                        LifestyleSelector(
+                            title = "Sleep Schedule",
+                            options = SleepSchedule.entries,
+                            selected = state.profile.lifestyle.sleepSchedule,
+                            onSelect = viewModel::onSleepChange
+                        )
+
+                        LifestyleSelector(
+                            title = "Cleanliness",
+                            options = Cleanliness.entries,
+                            selected = state.profile.lifestyle.cleanliness,
+                            onSelect = viewModel::onCleanlinessChange
+                        )
+                    }
+                }
             }
         }
     }
@@ -251,8 +290,8 @@ private fun SectionTitle(title: String) {
     Text(
         text = title,
         style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(bottom = 8.dp)
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface
     )
 }
 

@@ -17,11 +17,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nestmate.app.NestmateApplication
+import com.nestmate.app.data.model.UserType
 import com.nestmate.app.feature.bookmark.BookmarkListScreen
 import com.nestmate.app.feature.bookmark.BookmarkListViewModel
 import com.nestmate.app.feature.chat.ConversationListScreen
@@ -73,7 +75,8 @@ fun HomeScreen(
             ) {
                 Text(
                     text = "Welcome to Nestmate!",
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
                     textAlign = TextAlign.Center
                 )
@@ -87,17 +90,17 @@ fun HomeScreen(
                 Spacer(Modifier.height(32.dp))
                 Button(
                     onClick = onNavigateToProfile,
-                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
                 ) {
-                    Text("Create Profile")
+                    Text("Create Profile", fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.height(16.dp))
-                OutlinedButton(
+                TextButton(
                     onClick = {
                         viewModel.signOut()
                         onSignOut()
                     },
-                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
                 ) {
                     Text("Sign out")
                 }
@@ -109,7 +112,9 @@ fun HomeScreen(
 
             Scaffold(
                 bottomBar = {
-                    NavigationBar {
+                    NavigationBar(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    ) {
                         tabs.forEachIndexed { index, title ->
                             NavigationBarItem(
                                 icon = { Icon(icons[index], contentDescription = title) },
@@ -121,14 +126,24 @@ fun HomeScreen(
                     }
                 },
                 floatingActionButton = {
-                    if (selectedTab == 0) {
-                        FloatingActionButton(onClick = onNavigateToCreateListing) {
-                            Icon(Icons.Default.Add, contentDescription = "Post a Room")
-                        }
-                    } else if (selectedTab == 1) {
-                        FloatingActionButton(onClick = onNavigateToCreateRequirement) {
-                            Icon(Icons.Default.Add, contentDescription = "Post a Requirement")
-                        }
+                    val userType = state.profile?.userType
+                    
+                    // Logic fix: Only show FABs appropriate to the user's type
+                    val showPostRoom = (userType == UserType.ROOM_HOLDER || userType == UserType.BOTH) && selectedTab == 0
+                    val showPostRequirement = (userType == UserType.SEEKER || userType == UserType.BOTH) && selectedTab == 1
+
+                    if (showPostRoom) {
+                        ExtendedFloatingActionButton(
+                            onClick = onNavigateToCreateListing,
+                            icon = { Icon(Icons.Default.Add, contentDescription = "Post a Room") },
+                            text = { Text("Post Room") }
+                        )
+                    } else if (showPostRequirement) {
+                        ExtendedFloatingActionButton(
+                            onClick = onNavigateToCreateRequirement,
+                            icon = { Icon(Icons.Default.Add, contentDescription = "Post a Requirement") },
+                            text = { Text("Seek Room") }
+                        )
                     }
                 }
             ) { innerPadding ->
@@ -184,11 +199,26 @@ fun HomeScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
-                                Text("Hi, ${state.profile?.displayName ?: "there"}!", style = MaterialTheme.typography.titleLarge)
-                                Spacer(Modifier.height(16.dp))
-                                Button(onClick = onNavigateToProfile) { Text("Edit Profile") }
+                                Surface(
+                                    shape = MaterialTheme.shapes.extraLarge,
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    modifier = Modifier.size(100.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.padding(24.dp)
+                                    )
+                                }
+                                Spacer(Modifier.height(24.dp))
+                                Text("Hi, ${state.profile?.displayName ?: "there"}!", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                                 Spacer(Modifier.height(8.dp))
-                                OutlinedButton(onClick = { viewModel.signOut(); onSignOut() }) { Text("Sign out") }
+                                Text(state.profile?.phoneNumber ?: "", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Spacer(Modifier.height(32.dp))
+                                Button(onClick = onNavigateToProfile, modifier = Modifier.fillMaxWidth().height(50.dp)) { Text("Edit Profile") }
+                                Spacer(Modifier.height(16.dp))
+                                OutlinedButton(onClick = { viewModel.signOut(); onSignOut() }, modifier = Modifier.fillMaxWidth().height(50.dp)) { Text("Sign out") }
                             }
                         }
                     }

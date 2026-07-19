@@ -1,7 +1,9 @@
 package com.nestmate.app.feature.listing
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -19,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -144,52 +147,70 @@ fun ListingDetailScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(24.dp)
         ) {
-            Text(
-                text = listing.title,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "${listing.currency} ${listing.rentAmount}/month",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text("Details", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SuggestionChip(onClick = { }, label = { Text(listing.roomType.name) })
-                SuggestionChip(onClick = { }, label = { Text("${listing.location.area}, ${listing.location.city}") })
-                SuggestionChip(onClick = { }, label = { Text(listing.status.name) })
+            // Hero Placeholder Header
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = listing.roomType.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    fontWeight = FontWeight.Light,
+                    letterSpacing = androidx.compose.ui.unit.TextUnit(2f, androidx.compose.ui.unit.TextUnitType.Sp)
+                )
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
-            Text("Description", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = listing.description,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            Text("Roommate Preferences", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SuggestionChip(onClick = { }, label = { Text("Gender: ${listing.preferences.gender.name}") })
-                listing.preferences.occupationType?.let {
-                    SuggestionChip(onClick = { }, label = { Text("Occupation: ${it.name}") })
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    text = listing.title,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "${listing.currency} ${listing.rentAmount}/month",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text("Details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SuggestionChip(onClick = { }, label = { Text("${listing.location.area}, ${listing.location.city}") })
+                    SuggestionChip(onClick = { }, label = { Text("Status: ${listing.status.name}") })
                 }
-                listing.preferences.smoking?.let {
-                    SuggestionChip(onClick = { }, label = { Text("Smoking: ${it.name}") })
-                }
-                listing.preferences.food?.let {
-                    SuggestionChip(onClick = { }, label = { Text("Food: ${it.name}") })
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                Text("Description", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = listing.description,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                Text("Roommate Preferences", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SuggestionChip(onClick = { }, label = { Text("Gender: ${listing.preferences.gender.name}") })
+                    listing.preferences.occupationType?.let {
+                        SuggestionChip(onClick = { }, label = { Text("Occupation: ${it.name}") })
+                    }
+                    listing.preferences.smoking?.let {
+                        SuggestionChip(onClick = { }, label = { Text("Smoking: ${it.name}") })
+                    }
+                    listing.preferences.food?.let {
+                        SuggestionChip(onClick = { }, label = { Text("Food: ${it.name}") })
+                    }
                 }
             }
         }

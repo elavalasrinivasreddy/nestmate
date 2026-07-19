@@ -25,6 +25,7 @@ enum class OccupationType {
 
 data class Lifestyle(
     val smoking: SmokingPreference = SmokingPreference.NO,
+    val drinking: DrinkingPreference = DrinkingPreference.NO,
     val food: FoodPreference = FoodPreference.ANYTHING,
     val sleepSchedule: SleepSchedule = SleepSchedule.FLEXIBLE,
     val cleanliness: Cleanliness = Cleanliness.MODERATE
@@ -32,6 +33,10 @@ data class Lifestyle(
 
 enum class SmokingPreference {
     YES, NO, OUTSIDE
+}
+
+enum class DrinkingPreference {
+    YES, NO, OCCASIONALLY, OUTSIDE
 }
 
 enum class FoodPreference {

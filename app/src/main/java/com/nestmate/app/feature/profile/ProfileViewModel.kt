@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.nestmate.app.core.common.DataResult
 import com.nestmate.app.data.model.Cleanliness
+import com.nestmate.app.data.model.DrinkingPreference
 import com.nestmate.app.data.model.FoodPreference
 import com.nestmate.app.data.model.Lifestyle
 import com.nestmate.app.data.model.OccupationType
@@ -18,7 +19,6 @@ import com.nestmate.app.data.repository.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -48,31 +48,31 @@ class ProfileViewModel(
     private fun loadProfile() {
         val user = authRepository.currentUser ?: return
         viewModelScope.launch {
-            profileRepository.getProfileStream(user.uid).collectLatest { result ->
-                when (result) {
-                    is DataResult.Success -> {
-                        val existingProfile = result.data
-                        if (existingProfile != null) {
-                            _uiState.update { 
-                                it.copy(isLoading = false, profile = existingProfile)
-                            }
-                        } else {
-                            // New profile setup
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    profile = UserProfile(
-                                        uid = user.uid,
-                                        phoneNumber = user.phoneNumber,
-                                        verification = Verification(phoneVerified = user.phoneNumber != null)
-                                    )
+            // Fix (B-001): Use single getProfile() fetch instead of stream to prevent 
+            // cache syncs from overwriting the user's active form edits.
+            when (val result = profileRepository.getProfile(user.uid)) {
+                is DataResult.Success -> {
+                    val existingProfile = result.data
+                    if (existingProfile != null) {
+                        _uiState.update { 
+                            it.copy(isLoading = false, profile = existingProfile)
+                        }
+                    } else {
+                        // New profile setup
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                profile = UserProfile(
+                                    uid = user.uid,
+                                    phoneNumber = user.phoneNumber,
+                                    verification = Verification(phoneVerified = user.phoneNumber != null)
                                 )
-                            }
+                            )
                         }
                     }
-                    is DataResult.Error -> {
-                        _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
-                    }
+                }
+                is DataResult.Error -> {
+                    _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
                 }
             }
         }
@@ -84,6 +84,7 @@ class ProfileViewModel(
     fun onOccupationChange(occ: OccupationType) = updateProfile { it.copy(occupationType = occ) }
     
     fun onSmokingChange(smoking: SmokingPreference) = updateProfile { it.copy(lifestyle = it.lifestyle.copy(smoking = smoking)) }
+    fun onDrinkingChange(drinking: DrinkingPreference) = updateProfile { it.copy(lifestyle = it.lifestyle.copy(drinking = drinking)) }
     fun onFoodChange(food: FoodPreference) = updateProfile { it.copy(lifestyle = it.lifestyle.copy(food = food)) }
     fun onSleepChange(sleep: SleepSchedule) = updateProfile { it.copy(lifestyle = it.lifestyle.copy(sleepSchedule = sleep)) }
     fun onCleanlinessChange(clean: Cleanliness) = updateProfile { it.copy(lifestyle = it.lifestyle.copy(cleanliness = clean)) }
