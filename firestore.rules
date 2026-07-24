@@ -5,13 +5,20 @@ service cloud.firestore {
     // Helper functions
     function signedIn() { return request.auth != null; }
     function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    // True only when the write changes nothing but the review aggregates,
+    // so a reviewer (non-owner) can bump counts without editing other fields.
+    function onlyRatingAggregate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['reviewCount', 'averageRating']);
+    }
 
     // Profiles & Bookmarks
     match /users/{uid} {
       allow read: if signedIn();
-      // Allow creation/update. A user can only write their own document.
-      allow write: if isOwner(uid);
-      
+      allow create, delete: if isOwner(uid);
+      // Owner edits freely; any signed-in user may bump only the rating aggregates.
+      allow update: if isOwner(uid) || (signedIn() && onlyRatingAggregate());
+
       match /bookmarks/{itemId} {
         allow read, write: if isOwner(uid);
       }
@@ -21,7 +28,10 @@ service cloud.firestore {
     match /listings/{id} {
       allow read: if signedIn();
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
-      allow update, delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      // Owner may edit/delete; any signed-in user may bump only rating aggregates.
+      allow update: if (signedIn() && resource.data.ownerUid == request.auth.uid)
+        || (signedIn() && onlyRatingAggregate());
     }
     
     // Requirement Listings (Seekers)
@@ -41,6 +51,15 @@ service cloud.firestore {
           request.auth.uid in get(/databases/$(db)/documents/conversations/$(cid)).data.participantUids;
         allow create: if signedIn() && request.resource.data.senderUid == request.auth.uid;
       }
+    }
+
+    // Reviews & Ratings (Phase 11)
+    match /reviews/{id} {
+      allow read: if signedIn();
+      // A user may only author a review as themselves; ratings must be 1–5.
+      allow create: if signedIn()
+        && request.resource.data.reviewerUid == request.auth.uid
+        && request.resource.data.rating >= 1 && request.resource.data.rating <= 5;
     }
 
     // Reports (Trust & Safety)

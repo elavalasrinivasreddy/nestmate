@@ -64,7 +64,10 @@ class ListingFeedViewModel(
                     if (listing.ownerUid in blockedUids) return@filter false
                     
                     // 2. Discovery filtering
-                    val matchCity = filters.city.isBlank() || listing.location.city.equals(filters.city.trim(), ignoreCase = true)
+                    val q = filters.city.trim()
+                    val matchCity = q.isBlank() ||
+                        listing.location.city.contains(q, ignoreCase = true) ||
+                        listing.location.area.contains(q, ignoreCase = true)
                     val matchRoomType = filters.roomType == null || listing.roomType == filters.roomType
                     val matchRent = filters.maxRent.toDoubleOrNull()?.let { max -> listing.rentAmount <= max } ?: true
                     matchCity && matchRoomType && matchRent

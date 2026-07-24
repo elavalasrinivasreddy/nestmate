@@ -9,6 +9,7 @@ sealed class Destination(val route: String) {
     data object Auth : Destination("auth")
     data object Home : Destination("home")
     data object Profile : Destination("profile")
+    data object Settings : Destination("settings")
     data object Inbox : Destination("inbox")
     data class MessageThread(val conversationId: String) : Destination("thread/$conversationId") {
         companion object {

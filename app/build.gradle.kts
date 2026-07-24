@@ -56,6 +56,10 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    // Generative AI (Phase 12)
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+    // Image loading (Coil) — renders remote listing/profile photos by URL
+    implementation("io.coil-kt:coil-compose:2.7.0")
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

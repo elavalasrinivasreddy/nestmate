@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -28,7 +29,8 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = viewModel(
         factory = ProfileViewModel.provideFactory(
             (LocalContext.current.applicationContext as NestmateApplication).container.authRepository,
-            (LocalContext.current.applicationContext as NestmateApplication).container.profileRepository
+            (LocalContext.current.applicationContext as NestmateApplication).container.profileRepository,
+            (LocalContext.current.applicationContext as NestmateApplication).container.reviewRepository
         )
     )
 ) {
@@ -38,6 +40,14 @@ fun ProfileScreen(
         if (state.isSaved) {
             onProfileSaved()
             viewModel.resetSavedState()
+        }
+    }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(state.actionSuccessMessage) {
+        state.actionSuccessMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearActionMessage()
         }
     }
 
@@ -52,16 +62,16 @@ fun ProfileScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = {
             Surface(
                 color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 8.dp,
-                shadowElevation = 16.dp
+                tonalElevation = 3.dp,
+                shadowElevation = 8.dp
             ) {
-                PaddingValues(16.dp)
                 Button(
                     onClick = {
-                        // Fix for disappearing locations: Auto-add any pending text in the field
+                        // Auto-commit any pending text in the location field so it isn't lost on save.
                         if (newLocation.isNotBlank()) {
                             viewModel.addLocation(newLocation.trim())
                             newLocation = ""
@@ -71,17 +81,18 @@ fun ProfileScreen(
                     enabled = state.canSave,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
-                        .height(50.dp)
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .height(52.dp)
                 ) {
                     if (state.isSaving) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(20.dp),
                             color = MaterialTheme.colorScheme.onPrimary,
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text("Save Profile", fontWeight = FontWeight.Bold)
+                        Text("Save Profile", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -94,33 +105,8 @@ fun ProfileScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    Text(
-                        text = "Your Profile",
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    if (state.profile.verification.phoneVerified) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Verified",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Phone Verified (${state.profile.phoneNumber})",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-            }
+            // Hero header: identity + trust signals.
+            item { ProfileHeader(state.profile) }
 
             if (state.errorMessage != null) {
                 item {
@@ -139,99 +125,149 @@ fun ProfileScreen(
             }
 
             item {
-                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        SectionTitle("Basic Info")
+                ProfileSection(
+                    title = "About You",
+                    subtitle = "How other members will see you."
+                ) {
+                    OutlinedTextField(
+                        value = state.profile.displayName,
+                        onValueChange = viewModel::onNameChange,
+                        label = { Text("Full name") },
+                        isError = state.profile.displayName.isBlank(),
+                        supportingText = {
+                            if (state.profile.displayName.isBlank()) Text("Required")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
+                    )
+
+                    OutlinedTextField(
+                        value = state.profile.bio,
+                        onValueChange = viewModel::onBioChange,
+                        label = { Text("Bio") },
+                        placeholder = { Text("Tell us a bit about yourself...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        maxLines = 5,
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+                    )
+
+                    ChipGroup(label = "I am a") {
+                        UserType.entries.forEach { type ->
+                            FilterChip(
+                                selected = state.profile.userType == type,
+                                onClick = { viewModel.onUserTypeChange(type) },
+                                label = { Text(type.name.replace("_", " ")) }
+                            )
+                        }
+                    }
+
+                    ChipGroup(label = "Occupation") {
+                        OccupationType.entries.forEach { type ->
+                            FilterChip(
+                                selected = state.profile.occupationType == type,
+                                onClick = { viewModel.onOccupationChange(type) },
+                                label = { Text(type.name.replace("_", " ")) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                ProfileSection(
+                    title = "Lifestyle",
+                    subtitle = "Helps us match you with compatible roommates."
+                ) {
+                    LifestyleSelector(
+                        title = "Smoking",
+                        options = SmokingPreference.entries,
+                        selected = state.profile.lifestyle.smoking,
+                        onSelect = viewModel::onSmokingChange
+                    )
+                    LifestyleSelector(
+                        title = "Drinking",
+                        options = DrinkingPreference.entries,
+                        selected = state.profile.lifestyle.drinking,
+                        onSelect = viewModel::onDrinkingChange
+                    )
+                    LifestyleSelector(
+                        title = "Food",
+                        options = FoodPreference.entries,
+                        selected = state.profile.lifestyle.food,
+                        onSelect = viewModel::onFoodChange
+                    )
+                    LifestyleSelector(
+                        title = "Sleep schedule",
+                        options = SleepSchedule.entries,
+                        selected = state.profile.lifestyle.sleepSchedule,
+                        onSelect = viewModel::onSleepChange
+                    )
+                    LifestyleSelector(
+                        title = "Cleanliness",
+                        options = Cleanliness.entries,
+                        selected = state.profile.lifestyle.cleanliness,
+                        onSelect = viewModel::onCleanlinessChange
+                    )
+                }
+            }
+
+            item {
+                ProfileSection(
+                    title = "Preferred Locations",
+                    subtitle = "Cities or areas where you'd like to live."
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         OutlinedTextField(
-                            value = state.profile.displayName,
-                            onValueChange = viewModel::onNameChange,
-                            label = { Text("Full Name *") },
-                            modifier = Modifier.fillMaxWidth(),
+                            value = newLocation,
+                            onValueChange = { newLocation = it },
+                            label = { Text("Add city / area") },
+                            modifier = Modifier.weight(1f),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
                         )
-
-                        OutlinedTextField(
-                            value = state.profile.bio,
-                            onValueChange = viewModel::onBioChange,
-                            label = { Text("Bio") },
-                            placeholder = { Text("Tell us a bit about yourself...") },
-                            modifier = Modifier.fillMaxWidth(),
-                            minLines = 3,
-                            maxLines = 5,
-                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
-                        )
-                    }
-                }
-            }
-
-            item {
-                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        SectionTitle("I am a...")
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            UserType.entries.forEach { type ->
-                                FilterChip(
-                                    selected = state.profile.userType == type,
-                                    onClick = { viewModel.onUserTypeChange(type) },
-                                    label = { Text(type.name.replace("_", " ")) }
-                                )
-                            }
-                        }
-
-                        SectionTitle("Occupation")
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OccupationType.entries.forEach { type ->
-                                FilterChip(
-                                    selected = state.profile.occupationType == type,
-                                    onClick = { viewModel.onOccupationChange(type) },
-                                    label = { Text(type.name) }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            item {
-                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        SectionTitle("Preferred Locations")
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedTextField(
-                                value = newLocation,
-                                onValueChange = { newLocation = it },
-                                label = { Text("Add city/area") },
-                                modifier = Modifier.weight(1f),
-                                singleLine = true
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            FilledIconButton(
-                                onClick = {
+                        FilledIconButton(
+                            onClick = {
+                                if (newLocation.isNotBlank()) {
                                     viewModel.addLocation(newLocation.trim())
                                     newLocation = ""
-                                },
-                                modifier = Modifier.padding(top = 8.dp)
-                            ) {
-                                Icon(Icons.Default.Add, contentDescription = "Add Location")
-                            }
-                        }
-                        
-                        if (state.profile.preferredLocations.isNotEmpty()) {
-                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                state.profile.preferredLocations.forEach { loc ->
-                                    InputChip(
-                                        selected = true,
-                                        onClick = { viewModel.removeLocation(loc) },
-                                        label = { Text(loc) },
-                                        trailingIcon = {
-                                            Icon(Icons.Default.Close, contentDescription = "Remove", modifier = Modifier.size(16.dp))
-                                        }
-                                    )
                                 }
+                            },
+                            enabled = newLocation.isNotBlank(),
+                            modifier = Modifier
+                                .padding(top = 4.dp)
+                                .size(56.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Add location")
+                        }
+                    }
+
+                    if (state.profile.preferredLocations.isEmpty()) {
+                        Text(
+                            text = "No locations added yet.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            state.profile.preferredLocations.forEach { loc ->
+                                InputChip(
+                                    selected = true,
+                                    onClick = { viewModel.removeLocation(loc) },
+                                    label = { Text(loc) },
+                                    trailingIcon = {
+                                        Icon(
+                                            Icons.Default.Close,
+                                            contentDescription = "Remove $loc",
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                )
                             }
                         }
                     }
@@ -239,44 +275,50 @@ fun ProfileScreen(
             }
 
             item {
-                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        SectionTitle("Lifestyle")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        LifestyleSelector(
-                            title = "Smoking",
-                            options = SmokingPreference.entries,
-                            selected = state.profile.lifestyle.smoking,
-                            onSelect = viewModel::onSmokingChange
+                ProfileSection(title = "Reviews") {
+                    when {
+                        state.isReviewsLoading -> CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
                         )
-                        
-                        LifestyleSelector(
-                            title = "Drinking",
-                            options = DrinkingPreference.entries,
-                            selected = state.profile.lifestyle.drinking,
-                            onSelect = viewModel::onDrinkingChange
+                        state.reviewsError != null -> Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "Failed to load reviews.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                        state.reviews.isEmpty() -> Text(
+                            "No reviews yet.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        
-                        LifestyleSelector(
-                            title = "Food",
-                            options = FoodPreference.entries,
-                            selected = state.profile.lifestyle.food,
-                            onSelect = viewModel::onFoodChange
-                        )
+                        else -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            state.reviews.take(5).forEachIndexed { index, review ->
+                                if (index > 0) {
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                                }
+                                ReviewRow(review)
+                            }
+                        }
+                    }
 
-                        LifestyleSelector(
-                            title = "Sleep Schedule",
-                            options = SleepSchedule.entries,
-                            selected = state.profile.lifestyle.sleepSchedule,
-                            onSelect = viewModel::onSleepChange
-                        )
+                    var showReviewDialog by remember { mutableStateOf(false) }
+                    OutlinedButton(
+                        onClick = { showReviewDialog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Leave a Review")
+                    }
 
-                        LifestyleSelector(
-                            title = "Cleanliness",
-                            options = Cleanliness.entries,
-                            selected = state.profile.lifestyle.cleanliness,
-                            onSelect = viewModel::onCleanlinessChange
+                    if (showReviewDialog) {
+                        LeaveReviewDialog(
+                            onDismiss = { showReviewDialog = false },
+                            onSubmit = { rating, text ->
+                                viewModel.submitReview(rating, text)
+                                showReviewDialog = false
+                            }
                         )
                     }
                 }
@@ -286,16 +328,174 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun SectionTitle(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurface
+private fun ProfileHeader(profile: UserProfile) {
+    Column(modifier = Modifier.padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Your Profile",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.Star,
+                contentDescription = "Rating",
+                tint = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = String.format("%.1f (%d reviews)", profile.averageRating, profile.reviewCount),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        if (profile.verification.phoneVerified) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Verified",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Phone verified (${profile.phoneNumber})",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+/** Grouped form section: an ElevatedCard with a titled header and evenly spaced content. */
+@Composable
+private fun ProfileSection(
+    title: String,
+    subtitle: String? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            content()
+        }
+    }
+}
+
+/** A labelled group of chips (label uses labelLarge weight). */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ChipGroup(label: String, content: @Composable FlowRowScope.() -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), content = content)
+    }
+}
+
+@Composable
+private fun ReviewRow(review: Review) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                Icons.Default.Star,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = review.rating.toString(),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+        Text(
+            text = review.text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "Anonymous",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LeaveReviewDialog(
+    onDismiss: () -> Unit,
+    onSubmit: (Float, String) -> Unit
+) {
+    var rating by remember { mutableStateOf(5f) }
+    var reviewText by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Leave a Review") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "Rating: ${rating.toInt()} / 5",
+                    style = MaterialTheme.typography.labelLarge
+                )
+                Slider(
+                    value = rating,
+                    onValueChange = { rating = it },
+                    valueRange = 1f..5f,
+                    steps = 3
+                )
+                OutlinedTextField(
+                    value = reviewText,
+                    onValueChange = { reviewText = it },
+                    label = { Text("Review") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSubmit(rating, reviewText) },
+                enabled = reviewText.isNotBlank()
+            ) {
+                Text("Submit")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun <T : Enum<T>> LifestyleSelector(
     title: String,
@@ -303,21 +503,13 @@ private fun <T : Enum<T>> LifestyleSelector(
     selected: T,
     onSelect: (T) -> Unit
 ) {
-    Column(modifier = Modifier.padding(bottom = 16.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            options.forEach { option ->
-                FilterChip(
-                    selected = selected == option,
-                    onClick = { onSelect(option) },
-                    label = { Text(option.name.replace("_", " ")) }
-                )
-            }
+    ChipGroup(label = title) {
+        options.forEach { option ->
+            FilterChip(
+                selected = selected == option,
+                onClick = { onSelect(option) },
+                label = { Text(option.name.replace("_", " ")) }
+            )
         }
     }
 }

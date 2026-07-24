@@ -24,6 +24,7 @@ import com.nestmate.app.feature.requirement.CreateRequirementScreen
 import com.nestmate.app.feature.requirement.RequirementDetailScreen
 import com.nestmate.app.feature.requirement.RequirementDetailViewModel
 import com.nestmate.app.feature.welcome.WelcomeScreen
+import com.nestmate.app.feature.settings.SettingsScreen
 
 /**
  * Single source of navigation. Start destination is gated on auth state:
@@ -75,7 +76,8 @@ fun NestmateNavHost(
                 onNavigateToListingDetail = { id -> navController.navigate(Destination.ListingDetail(id).route) },
                 onNavigateToCreateRequirement = { navController.navigate(Destination.CreateRequirement().route) },
                 onNavigateToRequirementDetail = { id -> navController.navigate(Destination.RequirementDetail(id).route) },
-                onNavigateToThread = { id -> navController.navigate(Destination.MessageThread(id).route) }
+                onNavigateToThread = { id -> navController.navigate(Destination.MessageThread(id).route) },
+                onNavigateToSettings = { navController.navigate(Destination.Settings.route) }
             )
         }
         composable(Destination.Profile.route) {
@@ -83,6 +85,12 @@ fun NestmateNavHost(
                 onProfileSaved = {
                     navController.popBackStack()
                 }
+            )
+        }
+        composable(Destination.Settings.route) {
+            SettingsScreen(
+                settingsRepository = container.settingsRepository,
+                onBack = { navController.popBackStack() }
             )
         }
         composable(Destination.CreateListing.route) { backStackEntry ->
@@ -108,6 +116,7 @@ fun NestmateNavHost(
                     container.chatRepository,
                     container.bookmarkRepository,
                     container.trustRepository,
+                    container.reviewRepository,
                     listingId
                 )
             )
@@ -117,7 +126,8 @@ fun NestmateNavHost(
                 onDeleted = { navController.popBackStack() },
                 onMessageClick = { conversationId ->
                     navController.navigate(Destination.MessageThread(conversationId).route)
-                }
+                },
+                onBack = { navController.popBackStack() }
             )
         }
         composable(Destination.CreateRequirement.route) { backStackEntry ->

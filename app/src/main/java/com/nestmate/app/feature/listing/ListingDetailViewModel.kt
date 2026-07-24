@@ -17,6 +17,8 @@ import com.nestmate.app.data.repository.TrustRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import com.nestmate.app.data.model.Review
+import com.nestmate.app.data.repository.ReviewRepository
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -27,6 +29,7 @@ class ListingDetailViewModel(
     private val chatRepository: ChatRepository,
     private val bookmarkRepository: BookmarkRepository,
     private val trustRepository: TrustRepository,
+    private val reviewRepository: ReviewRepository,
     private val listingId: String
 ) : ViewModel() {
 
@@ -38,7 +41,10 @@ class ListingDetailViewModel(
         val isDeleted: Boolean = false,
         val isBookmarked: Boolean = false,
         val conversationIdToLaunch: String? = null,
-        val actionSuccessMessage: String? = null
+        val actionSuccessMessage: String? = null,
+        val reviews: List<Review> = emptyList(),
+        val isReviewsLoading: Boolean = true,
+        val reviewsError: String? = null
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -47,6 +53,7 @@ class ListingDetailViewModel(
     init {
         loadListing()
         checkBookmarkStatus()
+        loadReviews()
     }
 
     private fun loadListing() {
@@ -151,6 +158,42 @@ class ListingDetailViewModel(
         }
     }
 
+    private fun loadReviews() {
+        viewModelScope.launch {
+            reviewRepository.getReviewsStream(listingId).collectLatest { result ->
+                when (result) {
+                    is DataResult.Success -> {
+                        _uiState.update { it.copy(reviews = result.data, isReviewsLoading = false, reviewsError = null) }
+                    }
+                    is DataResult.Error -> {
+                        _uiState.update { it.copy(isReviewsLoading = false, reviewsError = result.message) }
+                    }
+                }
+            }
+        }
+    }
+
+    fun submitReview(rating: Float, text: String) {
+        val currentUser = authRepository.currentUser ?: return
+        viewModelScope.launch {
+            val review = Review(
+                targetId = listingId,
+                targetType = "LISTING",
+                reviewerUid = currentUser.uid,
+                rating = rating,
+                text = text
+            )
+            val result = reviewRepository.submitReview(review)
+            if (result is DataResult.Success) {
+                _uiState.update { it.copy(actionSuccessMessage = "Review submitted successfully") }
+                // Reload listing to get updated average rating
+                loadListing()
+            } else if (result is DataResult.Error) {
+                _uiState.update { it.copy(errorMessage = "Failed to submit review: ${result.message}") }
+            }
+        }
+    }
+
     fun clearActionMessage() = _uiState.update { it.copy(actionSuccessMessage = null) }
     fun onChatLaunched() = _uiState.update { it.copy(conversationIdToLaunch = null) }
 
@@ -161,11 +204,12 @@ class ListingDetailViewModel(
             chatRepository: ChatRepository,
             bookmarkRepository: BookmarkRepository,
             trustRepository: TrustRepository,
+            reviewRepository: ReviewRepository,
             listingId: String
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                ListingDetailViewModel(authRepository, listingRepository, chatRepository, bookmarkRepository, trustRepository, listingId) as T
+                ListingDetailViewModel(authRepository, listingRepository, chatRepository, bookmarkRepository, trustRepository, reviewRepository, listingId) as T
         }
     }
 }

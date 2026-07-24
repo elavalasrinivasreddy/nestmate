@@ -4,6 +4,7 @@ data class Listing(
     val id: String = "",
     val ownerUid: String = "",
     val title: String = "",
+    val imageUrls: List<String> = emptyList(),
     val description: String = "",
     val roomType: RoomType = RoomType.PRIVATE,
     val rentAmount: Double = 0.0,
@@ -13,6 +14,8 @@ data class Listing(
     val availableFrom: Long = System.currentTimeMillis(),
     val preferences: RoommatePreferences = RoommatePreferences(),
     val status: ListingStatus = ListingStatus.ACTIVE,
+    val averageRating: Double = 0.0,
+    val reviewCount: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

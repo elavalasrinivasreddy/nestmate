@@ -13,6 +13,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.nestmate.app.core.common.Locations
+import com.nestmate.app.core.designsystem.AreaPickerField
 import com.nestmate.app.data.model.GenderPreference
 import com.nestmate.app.data.model.RoomType
 
@@ -107,10 +109,13 @@ fun CreateListingScreen(
                         label = { Text("City *") },
                         modifier = Modifier.weight(1f)
                     )
-                    OutlinedTextField(
+                    AreaPickerField(
                         value = state.listing.location.area,
-                        onValueChange = viewModel::onAreaChange,
-                        label = { Text("Area *") },
+                        onValueChange = { area ->
+                            viewModel.onAreaChange(area)
+                            Locations.cityForArea(area)?.let { viewModel.onCityChange(it) }
+                        },
+                        label = "Area *",
                         modifier = Modifier.weight(1f)
                     )
                 }

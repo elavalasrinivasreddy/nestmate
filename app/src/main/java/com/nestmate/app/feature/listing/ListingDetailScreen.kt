@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,7 +26,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import com.nestmate.app.core.common.formatRent
 import com.nestmate.app.data.model.Listing
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.ui.platform.LocalContext
+import com.nestmate.app.core.common.listingShareText
+import com.nestmate.app.core.common.sharePlainText
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -34,11 +43,13 @@ fun ListingDetailScreen(
     onEdit: () -> Unit,
     onDeleted: () -> Unit,
     onMessageClick: (String) -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(state.isDeleted) {
         if (state.isDeleted) {
@@ -88,7 +99,19 @@ fun ListingDetailScreen(
         topBar = {
             TopAppBar(
                 title = { },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
                 actions = {
+                    IconButton(onClick = { sharePlainText(context, listingShareText(listing), "Share room") }) {
+                        Icon(
+                            Icons.Default.Share,
+                            contentDescription = "Share this room",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                     IconButton(onClick = viewModel::toggleBookmark) {
                         Icon(
                             imageVector = if (state.isBookmarked) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
@@ -156,13 +179,23 @@ fun ListingDetailScreen(
                     .background(MaterialTheme.colorScheme.secondaryContainer),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = listing.roomType.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    fontWeight = FontWeight.Light,
-                    letterSpacing = androidx.compose.ui.unit.TextUnit(2f, androidx.compose.ui.unit.TextUnitType.Sp)
-                )
+                val photo = listing.imageUrls.firstOrNull()
+                if (photo != null) {
+                    AsyncImage(
+                        model = photo,
+                        contentDescription = "Photo of ${listing.title}",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Text(
+                        text = listing.roomType.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        fontWeight = FontWeight.Light,
+                        letterSpacing = androidx.compose.ui.unit.TextUnit(2f, androidx.compose.ui.unit.TextUnitType.Sp)
+                    )
+                }
             }
             
             Column(modifier = Modifier.padding(24.dp)) {
@@ -172,9 +205,24 @@ fun ListingDetailScreen(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = "Rating",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = String.format("%.1f (%d reviews)", listing.averageRating, listing.reviewCount),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "${listing.currency} ${listing.rentAmount}/month",
+                    text = formatRent(listing.currency, listing.rentAmount),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold
@@ -213,6 +261,98 @@ fun ListingDetailScreen(
                     }
                 }
             }
+
+                Spacer(modifier = Modifier.height(32.dp))
+                HorizontalDivider()
+                
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Text("Reviews", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    if (state.isReviewsLoading) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                    } else if (state.reviewsError != null) {
+                        Text("Failed to load reviews", color = MaterialTheme.colorScheme.error)
+                    } else if (state.reviews.isEmpty()) {
+                        Text("No reviews yet.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        state.reviews.take(5).forEach { review ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(text = review.rating.toString(), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(text = review.text, style = MaterialTheme.typography.bodyMedium)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Anonymous",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    var showReviewDialog by remember { mutableStateOf(false) }
+                    Button(
+                        onClick = { showReviewDialog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Leave a Review")
+                    }
+
+                    if (showReviewDialog) {
+                        var rating by remember { mutableStateOf(5f) }
+                        var reviewText by remember { mutableStateOf("") }
+                        AlertDialog(
+                            onDismissRequest = { showReviewDialog = false },
+                            title = { Text("Leave a Review") },
+                            text = {
+                                Column {
+                                    Text("Rating (1-5): ${rating.toInt()}")
+                                    Slider(
+                                        value = rating,
+                                        onValueChange = { rating = it },
+                                        valueRange = 1f..5f,
+                                        steps = 3
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    OutlinedTextField(
+                                        value = reviewText,
+                                        onValueChange = { reviewText = it },
+                                        label = { Text("Review") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        minLines = 3
+                                    )
+                                }
+                            },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    viewModel.submitReview(rating, reviewText)
+                                    showReviewDialog = false
+                                }) {
+                                    Text("Submit")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showReviewDialog = false }) {
+                                    Text("Cancel")
+                                }
+                            }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(96.dp))
         }
     }
 }

@@ -1,5 +1,12 @@
 package com.nestmate.app.feature.home
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import com.nestmate.app.core.common.DataResult
+import com.nestmate.app.core.notifications.NotificationHelper
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -42,6 +49,7 @@ fun HomeScreen(
     onNavigateToCreateRequirement: () -> Unit,
     onNavigateToRequirementDetail: (String) -> Unit,
     onNavigateToThread: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel(
         factory = HomeViewModel.provideFactory(
@@ -110,6 +118,70 @@ fun HomeScreen(
             val tabs = listOf("Rooms", "Seekers", "Saved", "Inbox", "Profile")
             val icons = listOf(Icons.Default.Home, Icons.Default.Search, Icons.Default.Favorite, Icons.Default.Email, Icons.Default.Person)
 
+            // ---- Messaging: unread badge + foreground notifications ----
+            val settings = container.settingsRepository
+            val currentUid = container.authRepository.currentUser?.uid
+            val reads by settings.reads.collectAsStateWithLifecycle()
+            val conversationsResult by remember { container.chatRepository.getConversationsStream() }
+                .collectAsStateWithLifecycle(initialValue = null)
+            val conversations = (conversationsResult as? DataResult.Success)?.data ?: emptyList()
+            val unreadCount = conversations.count { c ->
+                val lm = c.lastMessage
+                lm != null && lm.senderUid != currentUid && lm.sentAt > (reads[c.id] ?: 0L)
+            }
+
+            // Notification permission: ask once (Android 13+) with a rationale card.
+            val permissionLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { }
+            var showPermissionDialog by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) {
+                if (!NotificationHelper.hasPermission(context) && !settings.notificationAsked) {
+                    showPermissionDialog = true
+                }
+            }
+            if (showPermissionDialog) {
+                AlertDialog(
+                    onDismissRequest = { showPermissionDialog = false; settings.notificationAsked = true },
+                    title = { Text("Stay in the loop") },
+                    text = { Text("Allow Nestmate to notify you when someone messages you about a room.") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showPermissionDialog = false
+                            settings.notificationAsked = true
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        }) { Text("Allow") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showPermissionDialog = false; settings.notificationAsked = true }) { Text("Not now") }
+                    }
+                )
+            }
+
+            // Foreground new-message notifications (background/killed needs FCM — see docs).
+            val notified = remember { mutableMapOf<String, Long>() }
+            val appStart = remember { System.currentTimeMillis() }
+            LaunchedEffect(conversations, selectedTab) {
+                if (selectedTab != 3) {
+                    conversations.forEach { c ->
+                        val lm = c.lastMessage ?: return@forEach
+                        if (lm.senderUid != currentUid && lm.sentAt > appStart &&
+                            lm.sentAt > (reads[c.id] ?: 0L) && lm.sentAt > (notified[c.id] ?: 0L)
+                        ) {
+                            notified[c.id] = lm.sentAt
+                            val name = c.participantsMeta[lm.senderUid]?.displayName ?: "New message"
+                            NotificationHelper.showMessage(context, name, lm.text, c.id.hashCode())
+                        }
+                    }
+                }
+            }
+            // Opening the inbox clears unread.
+            LaunchedEffect(selectedTab, conversations) {
+                if (selectedTab == 3) conversations.forEach { c -> settings.markConversationRead(c.id) }
+            }
+
             Scaffold(
                 bottomBar = {
                     NavigationBar(
@@ -117,7 +189,15 @@ fun HomeScreen(
                     ) {
                         tabs.forEachIndexed { index, title ->
                             NavigationBarItem(
-                                icon = { Icon(icons[index], contentDescription = title) },
+                                icon = {
+                                    if (index == 3 && unreadCount > 0) {
+                                        BadgedBox(badge = { Badge { Text(unreadCount.toString()) } }) {
+                                            Icon(icons[index], contentDescription = title)
+                                        }
+                                    } else {
+                                        Icon(icons[index], contentDescription = title)
+                                    }
+                                },
                                 label = { Text(title) },
                                 selected = selectedTab == index,
                                 onClick = { selectedTab = index }
@@ -217,6 +297,8 @@ fun HomeScreen(
                                 Text(state.profile?.phoneNumber ?: "", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Spacer(Modifier.height(32.dp))
                                 Button(onClick = onNavigateToProfile, modifier = Modifier.fillMaxWidth().height(50.dp)) { Text("Edit Profile") }
+                                Spacer(Modifier.height(16.dp))
+                                OutlinedButton(onClick = onNavigateToSettings, modifier = Modifier.fillMaxWidth().height(50.dp)) { Text("Settings") }
                                 Spacer(Modifier.height(16.dp))
                                 OutlinedButton(onClick = { viewModel.signOut(); onSignOut() }, modifier = Modifier.fillMaxWidth().height(50.dp)) { Text("Sign out") }
                             }

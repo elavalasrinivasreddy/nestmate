@@ -2,6 +2,7 @@ package com.nestmate.app.data.model
 
 data class UserProfile(
     val uid: String = "",
+    val photoUrl: String? = null,
     val displayName: String = "",
     val phoneNumber: String? = null,
     val userType: UserType = UserType.SEEKER,
@@ -11,6 +12,8 @@ data class UserProfile(
     val lifestyle: Lifestyle = Lifestyle(),
     val verification: Verification = Verification(),
     val blockedUids: List<String> = emptyList(),
+    val averageRating: Double = 0.0,
+    val reviewCount: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

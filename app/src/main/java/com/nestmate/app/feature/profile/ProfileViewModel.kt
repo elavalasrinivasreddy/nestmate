@@ -17,6 +17,9 @@ import com.nestmate.app.data.model.Verification
 import com.nestmate.app.data.repository.AuthRepository
 import com.nestmate.app.data.repository.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import com.nestmate.app.data.model.Review
+import com.nestmate.app.data.repository.ReviewRepository
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -24,7 +27,8 @@ import kotlinx.coroutines.launch
 
 class ProfileViewModel(
     private val authRepository: AuthRepository,
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val reviewRepository: ReviewRepository
 ) : ViewModel() {
 
     data class UiState(
@@ -32,7 +36,11 @@ class ProfileViewModel(
         val isSaving: Boolean = false,
         val errorMessage: String? = null,
         val isSaved: Boolean = false,
-        val profile: UserProfile = UserProfile()
+        val profile: UserProfile = UserProfile(),
+        val reviews: List<Review> = emptyList(),
+        val isReviewsLoading: Boolean = true,
+        val reviewsError: String? = null,
+        val actionSuccessMessage: String? = null
     ) {
         val canSave: Boolean
             get() = profile.displayName.isNotBlank() && !isSaving
@@ -43,6 +51,7 @@ class ProfileViewModel(
 
     init {
         loadProfile()
+        loadReviews()
     }
 
     private fun loadProfile() {
@@ -129,14 +138,53 @@ class ProfileViewModel(
         _uiState.update { it.copy(isSaved = false) }
     }
 
+    private fun loadReviews() {
+        val currentUser = authRepository.currentUser ?: return
+        viewModelScope.launch {
+            reviewRepository.getReviewsStream(currentUser.uid).collectLatest { result ->
+                when (result) {
+                    is DataResult.Success -> {
+                        _uiState.update { it.copy(reviews = result.data, isReviewsLoading = false, reviewsError = null) }
+                    }
+                    is DataResult.Error -> {
+                        _uiState.update { it.copy(isReviewsLoading = false, reviewsError = result.message) }
+                    }
+                }
+            }
+        }
+    }
+
+    fun submitReview(rating: Float, text: String) {
+        val currentUser = authRepository.currentUser ?: return
+        viewModelScope.launch {
+            val review = Review(
+                targetId = currentUser.uid, // reviewing the profile they are viewing
+                targetType = "USER",
+                reviewerUid = currentUser.uid, 
+                rating = rating,
+                text = text
+            )
+            val result = reviewRepository.submitReview(review)
+            if (result is DataResult.Success) {
+                _uiState.update { it.copy(actionSuccessMessage = "Review submitted successfully") }
+                loadProfile() // refresh average rating
+            } else if (result is DataResult.Error) {
+                _uiState.update { it.copy(errorMessage = "Failed to submit review: ${result.message}") }
+            }
+        }
+    }
+
+    fun clearActionMessage() = _uiState.update { it.copy(actionSuccessMessage = null) }
+
     companion object {
         fun provideFactory(
             authRepository: AuthRepository,
-            profileRepository: ProfileRepository
+            profileRepository: ProfileRepository,
+            reviewRepository: ReviewRepository
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                ProfileViewModel(authRepository, profileRepository) as T
+                ProfileViewModel(authRepository, profileRepository, reviewRepository) as T
         }
     }
 }

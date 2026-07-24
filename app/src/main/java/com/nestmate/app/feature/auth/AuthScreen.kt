@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -31,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nestmate.app.NestmateApplication
+import androidx.compose.ui.text.font.FontWeight
+import com.nestmate.app.core.designsystem.NestmateLogo
 
 /**
  * Phone authentication. Enter a phone number, receive/enter an
@@ -60,19 +63,23 @@ fun AuthScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .systemBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            NestmateLogo(size = 72.dp)
+            Spacer(Modifier.height(16.dp))
             Text(
-                text = "Sign in to Nestmate",
-                style = MaterialTheme.typography.headlineSmall,
+                text = "Nestmate",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(4.dp))
             Text(
-                text = "We will send you an OTP to verify your number.",
+                text = "Sign in to find your next room or roommate",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -95,7 +102,7 @@ fun AuthScreen(
                     Button(
                         onClick = { viewModel.sendCode(activity) },
                         enabled = state.canSendCode,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().height(56.dp)
                     ) {
                         if (state.isLoading) {
                             CircularProgressIndicator(
@@ -129,7 +136,7 @@ fun AuthScreen(
                     Button(
                         onClick = viewModel::confirmCode,
                         enabled = state.canConfirmCode,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().height(56.dp)
                     ) {
                         if (state.isLoading) {
                             CircularProgressIndicator(
