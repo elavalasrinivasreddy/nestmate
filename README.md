@@ -1,88 +1,61 @@
-# Nestmate
+<div align="center">
+  <img src="docs/images/logo.webp" width="120" alt="Nestmate Logo">
+  
+  <h1>Nestmate</h1>
+  <p><b>Find a room. Find a roommate. Without the chaos of scattered WhatsApp groups and sketchy listings.</b></p>
+  
+  [![Android CI](https://github.com/elavalasrinivasreddy/nestmate/actions/workflows/android_ci.yml/badge.svg)](https://github.com/elavalasrinivasreddy/nestmate/actions/workflows/android_ci.yml)
+</div>
 
-[![Android CI](https://github.com/elavalasrinivasreddy/nestmate/actions/workflows/android_ci.yml/badge.svg)](https://github.com/elavalasrinivasreddy/nestmate/actions/workflows/android_ci.yml)
+## 📱 About the App
 
-> Find a room. Find a roommate. Without the chaos of scattered WhatsApp groups and sketchy listings.
+**Nestmate** is a trust-first, two-sided housing-discovery app designed specifically for students and relocating professionals. 
+- **Room Holders:** Post *"I have a room"* to find verified, reliable roommates.
+- **Room Seekers:** Post *"I'm looking for a room"* and connect with great places to live.
 
-**Nestmate** is a trust-first, two-sided housing-discovery app for students and relocating professionals. One side posts *"I have a room"*; the other posts *"I'm looking for a room"*; the app helps them find each other and message safely — with verification and good filtering built in from day one.
+By bringing both sides together in one secure platform, Nestmate eliminates the noise of social media housing groups and provides a safe, filtered environment to find your next home.
 
-**Status:** 🚧 In active development — v1 (trust-first two-sided core)
-**Platform:** Android · Kotlin · Jetpack Compose
-**Backend:** Firebase (Auth · Firestore · Storage · Cloud Messaging)
+## ✨ Key Features
 
----
+*   🔒 **Verified Profiles:** Email and phone authentication built-in to ensure a trusted community.
+*   🏠 **Room Vacancies:** Easily post, edit, and manage available rooms with detailed descriptions.
+*   🙋 **Accommodation Requirements:** Room seekers can post exactly what they are looking for.
+*   🔍 **Smart Discovery:** Search and filter by location, budget, and room type to find the perfect match.
+*   💬 **Real-Time Chat:** In-app messaging allows both sides to communicate safely without sharing personal numbers upfront.
+*   🔖 **Bookmarks:** Save your favorite listings or roommate profiles for quick access.
 
-## What v1 includes
+## 🛠️ For Developers
 
-- Email + phone authentication with verified profiles
-- Post / edit / delete **room vacancies** ("I have a room")
-- Post / edit / delete **accommodation requirements** ("I need a room")
-- Search & filter by location, budget, and room type
-- In-app, real-time chat between the two sides
-- Bookmarks for listings and requirements
-
-Photo uploads (needs Firebase Storage) and AI-assisted search + fraud detection are intentionally scoped **after** v1 — see [`docs/ROADMAP.md`](docs/ROADMAP.md).
-
-## Tech stack
+Nestmate is built with a modern Android tech stack, focusing on architecture, code quality, and maintainability.
 
 | Layer | Choice |
 |---|---|
-| Language | Kotlin 2.2.x |
-| UI | Jetpack Compose + Material 3 |
-| Architecture | MVVM + Repository, unidirectional state (`StateFlow`) |
-| Dependency injection | Hilt |
-| Navigation | Navigation Compose (type-safe routes) |
-| Async | Coroutines + Flow |
-| Backend | Firebase Auth, Cloud Firestore, Storage, FCM |
-| Min / Target SDK | 24 / 36 |
-| Build | Gradle (Kotlin DSL) + version catalog |
+| **Language** | Kotlin 2.2.x |
+| **UI** | Jetpack Compose + Material 3 |
+| **Architecture** | MVVM + Repository, unidirectional state (`StateFlow`) |
+| **Dependency Injection** | Hilt |
+| **Navigation** | Navigation Compose (type-safe routes) |
+| **Async** | Coroutines + Flow |
+| **Backend** | Firebase Auth, Cloud Firestore, Storage, FCM |
 
-## Planned project structure
+### Getting Started (Local Development)
 
-```
-com.nestmate.app/
-├─ NestmateApplication.kt      # @HiltAndroidApp
-├─ MainActivity.kt
-├─ core/
-│  ├─ common/                  # Result types, validators, constants, extensions
-│  ├─ designsystem/            # theme, reusable Compose components
-│  └─ navigation/              # NavHost + typed routes
-├─ data/
-│  ├─ model/                   # domain models (User, Listing, Requirement, …)
-│  ├─ remote/                  # Firebase data sources
-│  └─ repository/              # repository interfaces + implementations
-├─ di/                         # Hilt modules
-└─ feature/
-   ├─ auth/  · profile/  · listing/  · requirement/
-   ├─ discovery/  · chat/  · bookmark/
-```
+Full setup instructions—including Firebase configuration, SDKs, signing, and running the app—are available in our [Setup Guide](docs/SETUP.md). 
 
-The current project is a default Compose scaffold; the structure above is built out in Phase 1 (see roadmap).
+**Quick Start:**
+1. Open the project in Android Studio (targets Firebase project *Nestmate*).
+2. Ensure `app/google-services.json` is present (see SETUP).
+3. Sync Gradle and Run on a device/emulator (API 24+).
 
-## Getting started
-
-Full setup — Firebase, SDKs, signing, running — is in [`docs/SETUP.md`](docs/SETUP.md). In short:
-
-1. Open the project in Android Studio (it already targets Firebase project *Nestmate*).
-2. Make sure `app/google-services.json` is present (it's git-ignored — see SETUP).
-3. Sync Gradle, then Run on a device/emulator (API 24+).
-
-### Initialize git (one time)
-
-```bash
-bash scripts/init-git.sh
-```
+*First time only: Run `bash scripts/init-git.sh` to initialize git hooks.*
 
 ### CI/CD Pipeline
 
-This project utilizes GitHub Actions for Continuous Integration. Every push and pull request to the `main` branch triggers a workflow that automatically:
-- Sets up the JDK environment.
-- Builds the app using Gradle.
-- Runs unit tests to ensure stability.
+This project utilizes GitHub Actions for Continuous Integration. Every push and pull request to the `main` branch triggers a workflow that automatically sets up the JDK environment, builds the app using Gradle, and runs unit tests to ensure stability.
 
-## Documentation
+## 📚 Documentation
 
-| Doc | Purpose |
+| Document | Description |
 |---|---|
 | [Product Spec](docs/PRODUCT_SPEC.md) | What we're building and for whom |
 | [Architecture](docs/ARCHITECTURE.md) | How the app is structured |
@@ -90,9 +63,8 @@ This project utilizes GitHub Actions for Continuous Integration. Every push and 
 | [Roadmap](docs/ROADMAP.md) | Phase-by-phase build plan |
 | [Status Tracker](docs/STATUS_TRACKER.md) | Live progress, blockers, dependencies |
 | [Decisions](docs/DECISIONS.md) | Architecture decision log (ADRs) |
-| [Bugs](docs/BUGS.md) | Bug log |
-| [Reviews](docs/REVIEWS.md) | Self-review / code-review log |
 
-## A note on this project
-
-Nestmate is a personal project, built for the craft of building a complete, capable app end-to-end — not to commercialize. Quality and completeness over growth.
+---
+<div align="center">
+  <sub>Built with care for the craft of software engineering. Quality and completeness over growth.</sub>
+</div>
