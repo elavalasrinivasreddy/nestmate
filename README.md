@@ -1,5 +1,7 @@
 # Nestmate
 
+[![Android CI](https://github.com/elavalasrinivasreddy/nestmate/actions/workflows/android_ci.yml/badge.svg)](https://github.com/elavalasrinivasreddy/nestmate/actions/workflows/android_ci.yml)
+
 > Find a room. Find a roommate. Without the chaos of scattered WhatsApp groups and sketchy listings.
 
 **Nestmate** is a trust-first, two-sided housing-discovery app for students and relocating professionals. One side posts *"I have a room"*; the other posts *"I'm looking for a room"*; the app helps them find each other and message safely — with verification and good filtering built in from day one.
@@ -70,6 +72,13 @@ Full setup — Firebase, SDKs, signing, running — is in [`docs/SETUP.md`](docs
 ```bash
 bash scripts/init-git.sh
 ```
+
+### CI/CD Pipeline
+
+This project utilizes GitHub Actions for Continuous Integration. Every push and pull request to the `main` branch triggers a workflow that automatically:
+- Sets up the JDK environment.
+- Builds the app using Gradle.
+- Runs unit tests to ensure stability.
 
 ## Documentation
 
